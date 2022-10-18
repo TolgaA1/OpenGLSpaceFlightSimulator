@@ -12,6 +12,7 @@ using namespace std;
 #include "glm\gtc\matrix_transform.hpp"
 #include "glm\gtc\type_ptr.hpp"
 #include "glm\gtc\matrix_inverse.hpp"
+#include "ModelLoader.h"
 
 #include "GL\freeglut.h"
 
@@ -32,6 +33,7 @@ float temp = 0.002f;
 CThreeDModel boxLeft, boxRight, boxFront;
 CThreeDModel model; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
+ModelLoader modelLoader;
 ///END MODEL LOADING
 
 glm::mat4 ProjectionMatrix; // matrix for the orthographic projection
@@ -62,8 +64,8 @@ bool Left = false;
 bool Right = false;
 bool Up = false;
 bool Down = false;
-bool Home = false;
-bool End = false;
+bool q = false;
+bool e = false;
 bool o = false;
 bool p = false;
 bool a = false;
@@ -178,72 +180,36 @@ void reshape(int width, int height)		// Resize the OpenGL window
 }
 void init()
 {
-	glClearColor(1.0,1.0,1.0,0.0);						//sets the clear colour to yellow
-														//glClear(GL_COLOR_BUFFER_BIT) in the display function
-														//will clear the buffer to this colour
+	glClearColor(1.0, 1.0, 1.0, 0.0);						//sets the clear colour to yellow
+											//glClear(GL_COLOR_BUFFER_BIT) in the display function
+											//will clear the buffer to this colour
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
 
 	myShader = new CShader();
 	//if(!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformationsWithDisplacement.vert", "glslfiles/basicTransformationsWithDisplacement.frag"))
-	if(!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformations.vert", "glslfiles/basicTransformations.frag"))
+	if (!myShader->CreateShaderProgram("BasicView", "glslfiles/basicTransformations.vert", "glslfiles/basicTransformations.frag"))
 	{
-		cout << "failed to load shader" << endl;
-	}		
+		std::cout << "failed to load shader" << std::endl;
+	}
 
 	myBasicShader = new CShader();
-	if(!myBasicShader->CreateShaderProgram("Basic", "glslfiles/basic.vert", "glslfiles/basic.frag"))
+	if (!myBasicShader->CreateShaderProgram("Basic", "glslfiles/basic.vert", "glslfiles/basic.frag"))
 	{
-		cout << "failed to load shader" << endl;
-	}		
+		std::cout << "failed to load shader" << std::endl;
+	}
 
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
 	glEnable(GL_TEXTURE_2D);
 
-	//lets initialise our object's rotation transformation 
-	//to the identity matrix
 	objectRotation = glm::mat4(1.0f);
 
-	cout << " loading model " << endl;
-	if(objLoader.LoadModel("TestModels/Sample_Ship.obj"))//returns true if the model is loaded
-	{
-		cout << " model loaded " << endl;		
+	modelLoader.initModel("TestModels/Sample_Ship.obj", model,myShader, true);
+	modelLoader.initModel("TestModels/boxLeft.obj", boxLeft, myShader, false);
+	modelLoader.initModel("TestModels/boxRight.obj", boxRight, myShader, false);
 
-		//copy data from the OBJLoader object to the threedmodel class
-		model.ConstructModelFromOBJLoader(objLoader);
-
-		//if you want to translate the object to the origin of the screen,
-		//first calculate the centre of the object, then move all the vertices
-		//back so that the centre is on the origin.
-		model.CalcCentrePoint();
-		model.CentreOnZero();
-
-	
-		model.InitVBO(myShader);
-	}
-	else
-	{
-		cout << " model failed to load " << endl;
-	}
-	
-
-	
-	if (objLoader.LoadModel("TestModels/boxLeft.obj"))//returns true if the model is loaded
-	{
-		boxLeft.ConstructModelFromOBJLoader(objLoader);
-
-		//Place to centre geometry before creating VBOs.
-
-		boxLeft.InitVBO(myShader);
-	}
-
-	if (objLoader.LoadModel("TestModels/boxRight.obj"))//returns true if the model is loaded
-	{
-		boxRight.ConstructModelFromOBJLoader(objLoader);
-		boxRight.InitVBO(myShader);
-	}
 }
 
 void special(int key, int x, int y)
@@ -269,10 +235,10 @@ void keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'q':
-		Home = true;
+		q = true;
 		break;
-	case 'r':
-		End = true;
+	case 'e':
+		e = true;
 		break;
 	case 'o':
 		o = true;
@@ -301,10 +267,10 @@ void keyboardUp(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'q':
-		Home = false;
+		q = false;
 		break;
-	case 'r':
-		End = false;
+	case 'e':
+		e = false;
 		break;
 	case 'o':
 		o = false;
@@ -343,10 +309,10 @@ void specialUp(int key, int x, int y)
 		Down = false;
 		break;
 	case GLUT_KEY_HOME:
-		Home = false;
+		q = false;
 		break;
 	case GLUT_KEY_END:
-		End = false;
+		e = false;
 		break;		
 	}
 }
@@ -370,11 +336,11 @@ void processKeys()
 	{
 		spinXinc = -0.005f;
 	}
-	if (Home)
+	if (q)
 	{
 		spinZinc = 0.005f;
 	}
-	if (End)
+	if (e)
 	{
 		spinZinc = -0.005f;
 	}
@@ -391,10 +357,6 @@ void processKeys()
 		pos.x -= 0.2f;
 	}
 
-	if (s)
-	{
-		pos.z += 0.2f;
-	}
 	updateTransform(spinXinc, spinYinc, spinZinc);
 }
 
