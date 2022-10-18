@@ -20,7 +20,7 @@ using namespace std;
 
 #include "shaders\Shader.h"
 
-CShader* myShader;  ///shader object 
+CShader* myShader;  ///shader object test
 CShader* myBasicShader;
 
 //MODEL LOADING
