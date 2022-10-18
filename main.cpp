@@ -207,7 +207,7 @@ void init()
 	objectRotation = glm::mat4(1.0f);
 
 	cout << " loading model " << endl;
-	if(objLoader.LoadModel("TestModels/customface.obj"))//returns true if the model is loaded
+	if(objLoader.LoadModel("TestModels/Sample_Ship.obj"))//returns true if the model is loaded
 	{
 		cout << " model loaded " << endl;		
 
@@ -390,14 +390,7 @@ void processKeys()
 	{
 		pos.x -= 0.2f;
 	}
-	if (d)
-	{
-		pos.x += 0.2f;
-	}
-	if (w)
-	{
-		pos.z -= 0.2f;
-	}
+
 	if (s)
 	{
 		pos.z += 0.2f;
