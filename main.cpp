@@ -322,19 +322,19 @@ void processKeys()
 	float spinXinc = 0.0f, spinYinc = 0.0f, spinZinc = 0.0f;
 	if (Left)
 	{
-		spinYinc = -0.005f;
+		spinYinc = -0.015f;
 	}
 	if (Right)
 	{
-		spinYinc = 0.005f;
+		spinYinc = 0.015f;
 	}
 	if (Up)
 	{
-		spinXinc = 0.005f;
+		spinXinc = 0.015f;
 	}
 	if (Down)
 	{
-		spinXinc = -0.005f;
+		spinXinc = -0.015f;
 	}
 	if (q)
 	{
