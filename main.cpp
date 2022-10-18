@@ -57,7 +57,7 @@ int	mouse_x=0, mouse_y=0;
 bool LeftPressed = false;
 int screenWidth=600, screenHeight=600;
 
-//booleans to handle when the arrow keys are pressed or released.
+//booleans to handle when the arrow keys are pressed or released. TEST
 bool Left = false;
 bool Right = false;
 bool Up = false;
