@@ -27,6 +27,7 @@
     <ClInclude Include="Obj\OBJLoader.h" />
     <ClInclude Include="Octree\Octree.h" />
     <ClInclude Include="shaders\Shader.h" />
+    <ClInclude Include="sphere\Sphere.h" />
     <ClInclude Include="Structures\Vector3d.h" />
     <ClInclude Include="TextureHandler\TextureHandler.h" />
     <ClInclude Include="Utilities\IntersectionTests.h" />
@@ -40,6 +41,7 @@
     <ClCompile Include="Obj\OBJLoader.cpp" />
     <ClCompile Include="Octree\Octree.cpp" />
     <ClCompile Include="shaders\Shader.cpp" />
+    <ClCompile Include="sphere\Sphere.cpp" />
     <ClCompile Include="Structures\Vector3d.cpp" />
     <ClCompile Include="TextureHandler\TextureHandler.cpp" />
     <ClCompile Include="Utilities\IntersectionTests.cpp" />

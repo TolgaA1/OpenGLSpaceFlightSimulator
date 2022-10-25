@@ -32,6 +32,9 @@
       <Filter>headers\shaders</Filter>
     </ClCompile>
     <ClCompile Include="ModelLoader.cpp" />
+    <ClCompile Include="sphere\Sphere.cpp">
+      <Filter>source\Sphere</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3dStruct\threeDModel.h">
@@ -66,6 +69,9 @@
     </ClInclude>
     <ClInclude Include="ModelLoader.h">
       <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="sphere\Sphere.h">
+      <Filter>source\Sphere</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -104,6 +110,9 @@
     </Filter>
     <Filter Include="headers\shaders">
       <UniqueIdentifier>{c715a860-d723-4985-8289-8bd7cadcb8e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Sphere">
+      <UniqueIdentifier>{7cd60efe-c02c-45a3-929b-1d2a9af8cffd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

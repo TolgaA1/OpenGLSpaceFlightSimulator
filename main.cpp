@@ -20,6 +20,8 @@ using namespace std;
 
 #include "shaders\Shader.h"
 
+#include "Sphere/Sphere.h"
+
 CShader* myShader;  ///shader object test
 CShader* myBasicShader;
 
@@ -30,8 +32,11 @@ CShader* myBasicShader;
 float amount = 0;
 float temp = 0.002f;
 	
+Sphere planeCollisionSphere;
+Sphere boxCollisionSphere;
+
 CThreeDModel boxLeft, boxRight, boxFront;
-CThreeDModel model; //A threeDModel object is needed for each model loaded
+CThreeDModel plane; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ModelLoader modelLoader;
 ///END MODEL LOADING
@@ -73,6 +78,8 @@ bool d = false;
 bool w = false;
 bool s = false;
 
+double minx = 0, miny = 0, minz = 0, maxx = 0, maxy = 0, maxz = 0;
+
 float spin=180;
 float speed=0;
 
@@ -90,6 +97,7 @@ void display()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
+	float test = sqrt(((10 - pos.x) * (10 - pos.x)) + ((20 - pos.y) * (20 - pos.y)) + ((0 - pos.z) * (0 - pos.z)));
 
 	//Part for displacement shader.
 	amount += temp;
@@ -139,7 +147,10 @@ void display()
 	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	
-	model.DrawElementsUsingVBO(myShader);
+	plane.DrawElementsUsingVBO(myShader);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	planeCollisionSphere.render();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	//Switch to basic shader to draw the lines for the bounding boxes
 	glUseProgram(myBasicShader->GetProgramObjID());
@@ -154,7 +165,7 @@ void display()
 	//switch back to the shader for textures and lighting on the objects.
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(10, 20, 0));
 
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
@@ -162,7 +173,20 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	boxLeft.DrawElementsUsingVBO(myShader);
 	boxRight.DrawElementsUsingVBO(myShader);
+
+	std::cout << test << std::endl;
+	if (((10 - pos.x)*(10 - pos.x)) + ((20 -pos.y)*(20-pos.y)) +((0 - pos.z)*(0-pos.z)) < (6 + 8) * (6 + 8)) {
+		std::cout << "COLLISION" << std::endl;
+	}
+	else
+	{
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		boxCollisionSphere.render();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 	//boxFront.drawElementsUsingVBO(myShader);
+
 
 	glFlush();
 	glutSwapBuffers();
@@ -206,9 +230,17 @@ void init()
 
 	objectRotation = glm::mat4(1.0f);
 
-	modelLoader.initModel("TestModels/Sample_Ship.obj", model,myShader, true);
-	modelLoader.initModel("TestModels/boxLeft.obj", boxLeft, myShader, false);
+	modelLoader.initModel("TestModels/Sample_Ship.obj", plane,myShader, true);
+	modelLoader.initModel("TestModels/boxLeft.obj", boxLeft, myShader, true);
 	modelLoader.initModel("TestModels/boxRight.obj", boxRight, myShader, false);
+	planeCollisionSphere.setCentre(0, 0, 0);
+	planeCollisionSphere.setRadius(6);
+	planeCollisionSphere.constructGeometry(myBasicShader, 16);
+
+	boxCollisionSphere.setCentre(0, 0, 0);
+	boxCollisionSphere.setRadius(8);
+	boxCollisionSphere.constructGeometry(myBasicShader, 16);
+
 
 }
 
