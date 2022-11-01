@@ -35,7 +35,7 @@ float temp = 0.002f;
 Sphere planeCollisionSphere;
 Sphere boxCollisionSphere;
 
-CThreeDModel boxLeft, boxRight, boxFront;
+CThreeDModel venusPlanet, boxRight, boxFront;
 CThreeDModel plane; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ModelLoader modelLoader;
@@ -152,6 +152,7 @@ void display()
 	pos.z += objectRotation[2][2]* speed;
 	
 	glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);
+	modelmatrix = glm::scale(viewingMatrix, glm::vec3(-2, -2, -2));
 	ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
@@ -164,7 +165,6 @@ void display()
 	//planeCollisionSphere.render();
 	plane.DrawAllBoxesForOctreeNodes(myBasicShader);
 	plane.DrawBoundingBox(myBasicShader);
-	plane.DrawOctreeLeaves(myBasicShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	//Switch to basic shader to draw the lines for the bounding boxes
@@ -178,15 +178,14 @@ void display()
 	//switch back to the shader for textures and lighting on the objects.
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
-
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 20, 0));
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	boxLeft.DrawElementsUsingVBO(myShader);
+	venusPlanet.DrawElementsUsingVBO(myShader);
 	boxRight.DrawElementsUsingVBO(myShader);
-	boxLeft.CalcBoundingBox(minx,miny,minz,maxx,maxy,maxz);
+	venusPlanet.CalcBoundingBox(minx,miny,minz,maxx,maxy,maxz);
 
 	/*
 	std::cout << test << std::endl;
@@ -255,7 +254,7 @@ void init()
 	objectRotation = glm::mat4(1.0f);
 
 	modelLoader.initModel("TestModels/Sample_Ship.obj", plane,myShader, true);
-	modelLoader.initModel("TestModels/boxLeft.obj", boxLeft, myShader, false);
+	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, false);
 	modelLoader.initModel("TestModels/boxRight.obj", boxRight, myShader, false);
 	planeCollisionSphere.setCentre(0, 0, 0);
 	planeCollisionSphere.setRadius(6);
