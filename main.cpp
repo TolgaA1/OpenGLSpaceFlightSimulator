@@ -62,6 +62,10 @@ float LightPos[4] = {0.0f, 0.0f, 1.0f, 0.0f};
 //
 int	mouse_x=0, mouse_y=0;
 bool LeftPressed = false;
+
+bool isCockpitView = true;
+bool isThirdpersonView = false;
+bool isPlanetView = false;
 int screenWidth=600, screenHeight=600;
 
 //booleans to handle when the arrow keys are pressed or released. TEST
@@ -77,6 +81,7 @@ bool a = false;
 bool d = false;
 bool w = false;
 bool s = false;
+bool v = false;
 
 double minx = 0, miny = 0, minz = 0, maxx = 0, maxy = 0, maxz = 0;
 
@@ -113,7 +118,7 @@ void display()
 	glm::mat4 viewingMatrix = glm::mat4(1.0f);
 	
 	//translation and rotation for view
-	viewingMatrix = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, -50));
+	//viewingMatrix = glm::translate(glm::mat4(1.0), glm::vec3(pos.x, pos.y, pos.z));
 
 	//apply a rotation to the view
 	//static float angle = 0.0f;
@@ -121,7 +126,14 @@ void display()
 	//viewingMatrix = glm::rotate(viewingMatrix, angle, glm::vec3(1.0f, 0.0f, 0.0));
 
 	//use of glm::lookAt for viewing instead.
-	//viewingMatrix = glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,100), glm::vec3(0.0f, 1.0f, 0.0));
+	if (isCockpitView)
+	{
+		viewingMatrix = glm::lookAt(glm::vec3(pos), glm::vec3(pos.x + objectRotation[2][0], pos.y + objectRotation[2][1], pos.z + objectRotation[2][2]), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
+	}
+	else if (isThirdpersonView)
+	{
+		viewingMatrix = glm::lookAt(glm::vec3(pos.x - objectRotation[2][0] * 15,pos.y - objectRotation[2][1] * 15,pos.z- objectRotation[2][2]*15), glm::vec3(pos.x, pos.y, pos.z), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
+	}
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
@@ -149,7 +161,10 @@ void display()
 	
 	plane.DrawElementsUsingVBO(myShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	planeCollisionSphere.render();
+	//planeCollisionSphere.render();
+	plane.DrawAllBoxesForOctreeNodes(myBasicShader);
+	plane.DrawBoundingBox(myBasicShader);
+	plane.DrawOctreeLeaves(myBasicShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	//Switch to basic shader to draw the lines for the bounding boxes
@@ -158,14 +173,12 @@ void display()
 	glUniformMatrix4fv(projMatLocation, 1, GL_FALSE, &ProjectionMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
-	//model.DrawAllBoxesForOctreeNodes(myBasicShader);
-	//model.DrawBoundingBox(myBasicShader);
-	//model.DrawOctreeLeaves(myBasicShader);
+
 
 	//switch back to the shader for textures and lighting on the objects.
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(10, 20, 0));
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
 
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
@@ -173,7 +186,9 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	boxLeft.DrawElementsUsingVBO(myShader);
 	boxRight.DrawElementsUsingVBO(myShader);
+	boxLeft.CalcBoundingBox(minx,miny,minz,maxx,maxy,maxz);
 
+	/*
 	std::cout << test << std::endl;
 	if (((10 - pos.x)*(10 - pos.x)) + ((20 -pos.y)*(20-pos.y)) +((0 - pos.z)*(0-pos.z)) < (6 + 8) * (6 + 8)) {
 		std::cout << "COLLISION" << std::endl;
@@ -186,8 +201,17 @@ void display()
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 	//boxFront.drawElementsUsingVBO(myShader);
+	*/
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(-6, 10, 4));
 
+	if ((minx < -6 && maxx > -6 || miny < 10 && maxy > 10 || minz < 4 && maxz > 4)) {
+		std::cout << "COLLISION" << std::endl;
+	}
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	boxCollisionSphere.render();
 	glFlush();
 	glutSwapBuffers();
 }
@@ -231,14 +255,14 @@ void init()
 	objectRotation = glm::mat4(1.0f);
 
 	modelLoader.initModel("TestModels/Sample_Ship.obj", plane,myShader, true);
-	modelLoader.initModel("TestModels/boxLeft.obj", boxLeft, myShader, true);
+	modelLoader.initModel("TestModels/boxLeft.obj", boxLeft, myShader, false);
 	modelLoader.initModel("TestModels/boxRight.obj", boxRight, myShader, false);
 	planeCollisionSphere.setCentre(0, 0, 0);
 	planeCollisionSphere.setRadius(6);
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
 
 	boxCollisionSphere.setCentre(0, 0, 0);
-	boxCollisionSphere.setRadius(8);
+	boxCollisionSphere.setRadius(1);
 	boxCollisionSphere.constructGeometry(myBasicShader, 16);
 
 
@@ -287,6 +311,10 @@ void keyboard(unsigned char key, int x, int y)
 	case 's':
 		s = true;
 		speed -= 0.005f;
+		break;
+	case 'v':
+		isThirdpersonView = !isThirdpersonView;
+		isCockpitView = !isCockpitView;
 		break;
 	case 'w':
 		w = true;
@@ -354,11 +382,12 @@ void processKeys()
 	float spinXinc = 0.0f, spinYinc = 0.0f, spinZinc = 0.0f;
 	if (Left)
 	{
-		spinYinc = -0.015f;
+		spinYinc = 0.015f;
+
 	}
 	if (Right)
 	{
-		spinYinc = 0.015f;
+		spinYinc = -0.015f;
 	}
 	if (Up)
 	{
