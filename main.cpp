@@ -64,13 +64,14 @@ glm::vec3 pos = glm::vec3(0.0f,0.0f,0.0f); //vector for the position of the obje
 float Material_Ambient[4] = {0.1f, 0.1f, 0.1f, 1.0f};
 float Material_Diffuse[4] = {0.8f, 0.8f, 0.5f, 1.0f};
 float Material_Specular[4] = {0.9f,0.9f,0.8f,1.0f};
-float Material_Shininess = 50;
+float Material_Shininess = 100;
 
 //Light Properties
-float Light_Ambient_And_Diffuse[4] = {0.8f, 0.8f, 0.6f, 1.0f};
+//float Light_Ambient_And_Diffuse[4] = {0.8f, 0.8f, 0.6f, 1.0f};
+float Light_Ambient_And_Diffuse[4] = { 1.0f, 1.f, 1.f, 1.0f };
 float Light_Specular[4] = {1.0f,1.0f,1.0f,1.0f};
-//float LightPos[4] = {0.0f, 0.0f, 1.0f, 0.0f};
-float LightPos[4] = { pos.x, pos.y, pos.z, 0.0f };
+float LightPos[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+//float LightPos[4] = { pos.x, pos.y, pos.z, 0.0f };
 //
 int	mouse_x=0, mouse_y=0;
 bool LeftPressed = false;
@@ -137,17 +138,26 @@ void display()
 	//angle += 0.01;
 	//viewingMatrix = glm::rotate(viewingMatrix, angle, glm::vec3(1.0f, 0.0f, 0.0));
 
+	pos.x += objectRotation[2][0]* speed;
+	pos.y += objectRotation[2][1]* speed;
+	pos.z += objectRotation[2][2]* speed;
+
 	//use of glm::lookAt for viewing instead.
 	if (isCockpitView)
 	{
-		viewingMatrix = glm::lookAt(glm::vec3(pos), glm::vec3(pos.x + objectRotation[2][0], pos.y + objectRotation[2][1], pos.z + objectRotation[2][2]), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
+		viewingMatrix = glm::lookAt(glm::vec3(pos.x, pos.y, pos.z), glm::vec3(pos.x + objectRotation[2][0], pos.y + objectRotation[2][1], pos.z + objectRotation[2][2]), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
 	}
 	else if (isThirdpersonView)
 	{
-		viewingMatrix = glm::lookAt(glm::vec3(pos.x - objectRotation[2][0] * 15,pos.y - objectRotation[2][1] * 15,pos.z- objectRotation[2][2]*15), glm::vec3(pos.x, pos.y, pos.z), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
+		glm::vec3 direction = glm::normalize(glm::vec3(objectRotation[2][0], objectRotation[2][1], objectRotation[2][2]));
+		viewingMatrix = glm::lookAt(glm::vec3(pos.x - direction.x * 15,pos.y - direction.y * 15,pos.z- direction.z *15), glm::vec3(pos.x, pos.y, pos.z), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
 	}
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
+
+	LightPos[0] = pos.x + objectRotation[2][0];
+	LightPos[1] = pos.y + objectRotation[2][1];
+	LightPos[2] = pos.z + objectRotation[2][2];
 
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightPos"), 1, LightPos);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_ambient"), 1, Light_Ambient_And_Diffuse);
@@ -159,14 +169,10 @@ void display()
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_specular"), 1, Material_Specular);
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "material_shininess"), Material_Shininess);
 
-	pos.x += objectRotation[2][0]*speed;
-	pos.y += objectRotation[2][1]* speed;
-	pos.z += objectRotation[2][2]* speed;
+	
 
-	LightPos[0] = pos.x;
-	LightPos[1] = pos.y;
-	LightPos[2] = pos.z;
-	glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);
+
+	glm::mat4 modelmatrix =  glm::translate(glm::mat4(1.0f), pos);
 	//modelmatrix = glm::scale(viewingMatrix, glm::vec3(-2, -2, -2));
 	ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
@@ -199,8 +205,16 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	venusPlanet.DrawElementsUsingVBO(myShader);
 	marsPlanet.DrawElementsUsingVBO(myShader);
-	boxRight.DrawElementsUsingVBO(myShader);
 	venusPlanet.CalcBoundingBox(minx,miny,minz,maxx,maxy,maxz);
+
+	glUseProgram(myBasicShader->GetProgramObjID());  // use the shader
+
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+
+	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	boxRight.DrawElementsUsingVBO(myBasicShader);
 
 	/*
 	std::cout << test << std::endl;
@@ -270,7 +284,6 @@ void init()
 
 	modelLoader.initModel("TestModels/Sample_Ship.obj", plane,myShader, true);
 	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, false);
-	modelLoader.initModel("TestModels/skybox.obj", boxRight, myShader, false);
 	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, false);
 	planeCollisionSphere.setCentre(0, 0, 0);
 	planeCollisionSphere.setRadius(6);
@@ -279,6 +292,10 @@ void init()
 	boxCollisionSphere.setCentre(0, 0, 0);
 	boxCollisionSphere.setRadius(1);
 	boxCollisionSphere.constructGeometry(myBasicShader, 16);
+
+	glUseProgram(myBasicShader->GetProgramObjID());  
+	glEnable(GL_TEXTURE_2D);
+	modelLoader.initModel("TestModels/skybox.obj", boxRight, myBasicShader, false);
 
 
 }

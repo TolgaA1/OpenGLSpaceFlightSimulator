@@ -54,7 +54,7 @@ public:
 				model.CalcCentrePoint();
 				model.CentreOnZero();
 			}
-
+			
 			model.InitVBO(myShader);
 		}
 		else

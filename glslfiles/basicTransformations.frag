@@ -33,7 +33,7 @@ void main(void)
 	float NdotL;
 	
 	n = normalize(ex_Normal);
-	L = normalize(ex_LightDir);
+	L = normalize(ex_LightDir-ex_PositionEye);
 
 	vec3 v = normalize(-ex_PositionEye);
 	vec3 r = normalize(-reflect(L, n));
