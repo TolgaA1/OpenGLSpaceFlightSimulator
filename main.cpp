@@ -1,3 +1,15 @@
+/*
+* TO-DO
+* PUT PLANETS AND MAKE THE MAP LOOK LIKE SPACE
+* ADD LIGHT ONTO PLANE
+* ALLOW CAMERA SWITCH ONTO SOMEWHERE IN THE ENVIRONMENT
+* FIGURE OUT COLLISIONS
+* ALLOW PLANE TO TAKE OFF AND LAND
+* ADD MOVING OBJECT TO ENVIRONMENT
+* ALLOW COLLISION BETWEEN THAT AND PLANE
+* FIGURE OUT DAMAGE
+* atmosphere!!!
+*/
 #include <iostream>
 using namespace std;
 
@@ -35,7 +47,7 @@ float temp = 0.002f;
 Sphere planeCollisionSphere;
 Sphere boxCollisionSphere;
 
-CThreeDModel venusPlanet, boxRight, boxFront;
+CThreeDModel venusPlanet, marsPlanet, boxRight, boxFront;
 CThreeDModel plane; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ModelLoader modelLoader;
@@ -57,8 +69,8 @@ float Material_Shininess = 50;
 //Light Properties
 float Light_Ambient_And_Diffuse[4] = {0.8f, 0.8f, 0.6f, 1.0f};
 float Light_Specular[4] = {1.0f,1.0f,1.0f,1.0f};
-float LightPos[4] = {0.0f, 0.0f, 1.0f, 0.0f};
-
+//float LightPos[4] = {0.0f, 0.0f, 1.0f, 0.0f};
+float LightPos[4] = { pos.x, pos.y, pos.z, 0.0f };
 //
 int	mouse_x=0, mouse_y=0;
 bool LeftPressed = false;
@@ -150,9 +162,12 @@ void display()
 	pos.x += objectRotation[2][0]*speed;
 	pos.y += objectRotation[2][1]* speed;
 	pos.z += objectRotation[2][2]* speed;
-	
+
+	LightPos[0] = pos.x;
+	LightPos[1] = pos.y;
+	LightPos[2] = pos.z;
 	glm::mat4 modelmatrix = glm::translate(glm::mat4(1.0f), pos);
-	modelmatrix = glm::scale(viewingMatrix, glm::vec3(-2, -2, -2));
+	//modelmatrix = glm::scale(viewingMatrix, glm::vec3(-2, -2, -2));
 	ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 
@@ -163,7 +178,6 @@ void display()
 	plane.DrawElementsUsingVBO(myShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//planeCollisionSphere.render();
-	plane.DrawAllBoxesForOctreeNodes(myBasicShader);
 	plane.DrawBoundingBox(myBasicShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -178,12 +192,13 @@ void display()
 	//switch back to the shader for textures and lighting on the objects.
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 20, 0));
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	venusPlanet.DrawElementsUsingVBO(myShader);
+	marsPlanet.DrawElementsUsingVBO(myShader);
 	boxRight.DrawElementsUsingVBO(myShader);
 	venusPlanet.CalcBoundingBox(minx,miny,minz,maxx,maxy,maxz);
 
@@ -223,7 +238,7 @@ void reshape(int width, int height)		// Resize the OpenGL window
 	glViewport(0,0,width,height);						// Reset The Current Viewport
 
 	//Set the projection matrix
-	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth/(GLfloat)screenHeight, 1.0f, 200.0f);
+	ProjectionMatrix = glm::perspective(glm::radians(60.0f), (GLfloat)screenWidth/(GLfloat)screenHeight, 1.0f, 20000000.0f);
 }
 void init()
 {
@@ -255,7 +270,8 @@ void init()
 
 	modelLoader.initModel("TestModels/Sample_Ship.obj", plane,myShader, true);
 	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, false);
-	modelLoader.initModel("TestModels/boxRight.obj", boxRight, myShader, false);
+	modelLoader.initModel("TestModels/skybox.obj", boxRight, myShader, false);
+	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, false);
 	planeCollisionSphere.setCentre(0, 0, 0);
 	planeCollisionSphere.setRadius(6);
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
@@ -309,7 +325,6 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case 's':
 		s = true;
-		speed -= 0.005f;
 		break;
 	case 'v':
 		isThirdpersonView = !isThirdpersonView;
@@ -317,7 +332,6 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case 'w':
 		w = true;
-		speed += 0.005f;
 		break;
 	}
 }
@@ -415,6 +429,14 @@ void processKeys()
 	if (a)
 	{
 		pos.x -= 0.2f;
+	}
+	if (w)
+	{
+		speed += 0.105f;
+	}
+	if (s)
+	{
+		speed -= 0.105f;
 	}
 
 	updateTransform(spinXinc, spinYinc, spinZinc);
