@@ -47,7 +47,7 @@ float temp = 0.002f;
 Sphere planeCollisionSphere;
 Sphere boxCollisionSphere;
 
-CThreeDModel venusPlanet, marsPlanet, boxRight, boxFront;
+CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront;
 CThreeDModel plane; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ModelLoader modelLoader;
@@ -73,6 +73,7 @@ float Light_Specular[4] = {1.0f,1.0f,1.0f,1.0f};
 float LightPos[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 //float LightPos[4] = { pos.x, pos.y, pos.z, 0.0f };
 //
+
 int	mouse_x=0, mouse_y=0;
 bool LeftPressed = false;
 
@@ -142,7 +143,7 @@ void display()
 	pos.y += objectRotation[2][1]* speed;
 	pos.z += objectRotation[2][2]* speed;
 
-	//use of glm::lookAt for viewing instead.
+	//Camera view toggling.
 	if (isCockpitView)
 	{
 		viewingMatrix = glm::lookAt(glm::vec3(pos.x, pos.y, pos.z), glm::vec3(pos.x + objectRotation[2][0], pos.y + objectRotation[2][1], pos.z + objectRotation[2][2]), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
@@ -155,10 +156,11 @@ void display()
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
-	LightPos[0] = pos.x + objectRotation[2][0];
-	LightPos[1] = pos.y + objectRotation[2][1];
-	LightPos[2] = pos.z + objectRotation[2][2];
+	LightPos[0] = pos.x - objectRotation[2][0]*5;
+	LightPos[1] = pos.y - objectRotation[2][1]*5;
+	LightPos[2] = pos.z - objectRotation[2][2]*5;
 
+	//Passing variables onto shader
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightPos"), 1, LightPos);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_ambient"), 1, Light_Ambient_And_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_diffuse"), 1, Light_Ambient_And_Diffuse);
@@ -169,23 +171,22 @@ void display()
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_specular"), 1, Material_Specular);
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "material_shininess"), Material_Shininess);
 
-	
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "constantAttenuation"), 0.000000000005f);
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "linearAttenuation"), 0.000000000005f);
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "quadraticAttenuation"), 0.0000000005f);
 
-
+	//Spaceship rendering
 	glm::mat4 modelmatrix =  glm::translate(glm::mat4(1.0f), pos);
-	//modelmatrix = glm::scale(viewingMatrix, glm::vec3(-2, -2, -2));
 	ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-
-	
 	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	
 	plane.DrawElementsUsingVBO(myShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	//planeCollisionSphere.render();
-	plane.DrawBoundingBox(myBasicShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//planeCollisionSphere.render();
+	
 
 	//Switch to basic shader to draw the lines for the bounding boxes
 	glUseProgram(myBasicShader->GetProgramObjID());
@@ -195,16 +196,17 @@ void display()
 
 
 
+	//Render the scene objects
 	//switch back to the shader for textures and lighting on the objects.
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
-
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+
 	venusPlanet.DrawElementsUsingVBO(myShader);
 	marsPlanet.DrawElementsUsingVBO(myShader);
+	mercuryPlanet.DrawElementsUsingVBO(myShader);
 	venusPlanet.CalcBoundingBox(minx,miny,minz,maxx,maxy,maxz);
 
 	glUseProgram(myBasicShader->GetProgramObjID());  // use the shader
@@ -229,7 +231,7 @@ void display()
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 	//boxFront.drawElementsUsingVBO(myShader);
-	*/
+	
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(-6, 10, 4));
 
 	if ((minx < -6 && maxx > -6 || miny < 10 && maxy > 10 || minz < 4 && maxz > 4)) {
@@ -240,6 +242,7 @@ void display()
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	boxCollisionSphere.render();
+	*/
 	glFlush();
 	glutSwapBuffers();
 }
@@ -285,6 +288,7 @@ void init()
 	modelLoader.initModel("TestModels/Sample_Ship.obj", plane,myShader, true);
 	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, false);
 	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, false);
+	modelLoader.initModel("TestModels/Mercury_1K.obj", mercuryPlanet, myShader, false);
 	planeCollisionSphere.setCentre(0, 0, 0);
 	planeCollisionSphere.setRadius(6);
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
@@ -487,7 +491,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowSize(screenWidth, screenHeight);
 	glutInitWindowPosition(100, 100);
-	glutCreateWindow("OpenGL FreeGLUT Example: Obj loading");
+	glutCreateWindow("Spaceship Simulator");
 
 	//This initialises glew - it must be called after the window is created.
 	GLenum err = glewInit();

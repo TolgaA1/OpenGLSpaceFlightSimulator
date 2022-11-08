@@ -18,9 +18,12 @@ uniform vec4 material_specular;
 uniform float material_shininess;
 
 uniform sampler2D DiffuseMap;
-
+uniform float constantAttenuation;
+uniform float linearAttenuation;
+uniform float quadraticAttenuation;
 void main(void)
 {
+	float dist,att;
 	//out_Color = texture(DiffuseMap, ex_TexCoord); //show texture values
 
 	//out_Color = vec4(ex_Normal,1.0); //Show normals
@@ -32,6 +35,7 @@ void main(void)
 	vec4 color;
 	float NdotL;
 	
+	dist = length(ex_LightDir - ex_PositionEye);
 	n = normalize(ex_Normal);
 	L = normalize(ex_LightDir-ex_PositionEye);
 
@@ -46,10 +50,16 @@ void main(void)
 	
 	if(NdotL > 0.0) 
 	{
+			att = min(1.0 / (constantAttenuation +
+                linearAttenuation * dist +
+                quadraticAttenuation * dist * dist),1);
+
 		color += (light_ambient * material_diffuse * NdotL);
 	}
 
 	color += material_specular * light_specular * pow(RdotV, material_shininess);
+
+	color *=att;
 
 	//out_Color = color;  //show just lighting
 
