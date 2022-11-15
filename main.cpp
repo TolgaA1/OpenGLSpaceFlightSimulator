@@ -47,7 +47,7 @@ float temp = 0.002f;
 Sphere planeCollisionSphere;
 Sphere boxCollisionSphere;
 
-CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront;
+CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront, testModel;
 CThreeDModel plane; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ModelLoader modelLoader;
@@ -69,8 +69,10 @@ float Material_Shininess = 100;
 //Light Properties
 //float Light_Ambient_And_Diffuse[4] = {0.8f, 0.8f, 0.6f, 1.0f};
 float Light_Ambient_And_Diffuse[4] = { 1.0f, 1.f, 1.f, 1.0f };
-float Light_Specular[4] = {1.0f,1.0f,1.0f,1.0f};
+//float Light_Specular[4] = {1.0f,1.0f,1.0f,1.0f};
+float Light_Specular[4] = { 0.1f,0.1f,0.1f,0.1f };
 float LightPos[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+float LightDir[4] = {0.0f,0.0f,0.0f,1.0f};
 //float LightPos[4] = { pos.x, pos.y, pos.z, 0.0f };
 //
 
@@ -156,11 +158,15 @@ void display()
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
+	
 	LightPos[0] = pos.x - objectRotation[2][0]*5;
 	LightPos[1] = pos.y - objectRotation[2][1]*5;
 	LightPos[2] = pos.z - objectRotation[2][2]*5;
+	
+
 
 	//Passing variables onto shader
+	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightDir"), 1, LightDir);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightPos"), 1, LightPos);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_ambient"), 1, Light_Ambient_And_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_diffuse"), 1, Light_Ambient_And_Diffuse);
@@ -170,9 +176,9 @@ void display()
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_diffuse"), 1, Material_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "material_specular"), 1, Material_Specular);
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "material_shininess"), Material_Shininess);
-
-	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "constantAttenuation"), 0.000000000005f);
-	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "linearAttenuation"), 0.000000000005f);
+	//0.000000000005
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "constantAttenuation"), 0.0000000005f);
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "linearAttenuation"), 0.0000000005f);
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "quadraticAttenuation"), 0.0000000005f);
 
 	//Spaceship rendering
@@ -203,10 +209,10 @@ void display()
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-
 	venusPlanet.DrawElementsUsingVBO(myShader);
 	marsPlanet.DrawElementsUsingVBO(myShader);
 	mercuryPlanet.DrawElementsUsingVBO(myShader);
+	testModel.DrawElementsUsingVBO(myShader);
 	venusPlanet.CalcBoundingBox(minx,miny,minz,maxx,maxy,maxz);
 
 	glUseProgram(myBasicShader->GetProgramObjID());  // use the shader
@@ -216,7 +222,8 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	boxRight.DrawElementsUsingVBO(myBasicShader);
+	//boxRight.DrawElementsUsingVBO(myBasicShader);
+
 
 	/*
 	std::cout << test << std::endl;
@@ -289,8 +296,9 @@ void init()
 	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, false);
 	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, false);
 	modelLoader.initModel("TestModels/Mercury_1K.obj", mercuryPlanet, myShader, false);
+	modelLoader.initModel("TestModels/boxLeft.obj", testModel, myShader, true);
 	planeCollisionSphere.setCentre(0, 0, 0);
-	planeCollisionSphere.setRadius(6);
+	planeCollisionSphere.setRadius(1);
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
 
 	boxCollisionSphere.setCentre(0, 0, 0);
@@ -414,30 +422,31 @@ void specialUp(int key, int x, int y)
 void processKeys()
 {
 	float spinXinc = 0.0f, spinYinc = 0.0f, spinZinc = 0.0f;
+	//used to be 0.015
 	if (Left)
 	{
-		spinYinc = 0.015f;
+		spinYinc = 0.00015f;
 
 	}
 	if (Right)
 	{
-		spinYinc = -0.015f;
+		spinYinc = -0.00015f;
 	}
 	if (Up)
 	{
-		spinXinc = 0.015f;
+		spinXinc = 0.00015f;
 	}
 	if (Down)
 	{
-		spinXinc = -0.015f;
+		spinXinc = -0.00015f;
 	}
 	if (q)
 	{
-		spinZinc = 0.005f;
+		spinZinc = 0.0005f;
 	}
 	if (e)
 	{
-		spinZinc = -0.005f;
+		spinZinc = -0.0005f;
 	}
 	if (o)
 	{
@@ -451,13 +460,14 @@ void processKeys()
 	{
 		pos.x -= 0.2f;
 	}
+	//used to be 0.105
 	if (w)
 	{
-		speed += 0.105f;
+		speed += 0.00105f;
 	}
 	if (s)
 	{
-		speed -= 0.105f;
+		speed -= 0.00105f;
 	}
 
 	updateTransform(spinXinc, spinYinc, spinZinc);
