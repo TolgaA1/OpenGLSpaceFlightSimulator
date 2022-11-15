@@ -134,5 +134,11 @@
     <None Include="glslfiles\basicTransformationsWithDisplacement.frag">
       <Filter>headers\glslfiles</Filter>
     </None>
+    <None Include="..\Lighting Example\glslfiles\basicSpecularSpotlight.frag">
+      <Filter>headers\glslfiles</Filter>
+    </None>
+    <None Include="..\Lighting Example\glslfiles\basicSpecularSpotlight.vert">
+      <Filter>headers\glslfiles</Filter>
+    </None>
   </ItemGroup>
 </Project>

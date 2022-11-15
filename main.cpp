@@ -1,7 +1,5 @@
 /*
 * TO-DO
-* PUT PLANETS AND MAKE THE MAP LOOK LIKE SPACE
-* ADD LIGHT ONTO PLANE
 * ALLOW CAMERA SWITCH ONTO SOMEWHERE IN THE ENVIRONMENT
 * FIGURE OUT COLLISIONS
 * ALLOW PLANE TO TAKE OFF AND LAND
@@ -61,9 +59,9 @@ glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 pos = glm::vec3(0.0f,0.0f,0.0f); //vector for the position of the object.
 
 //Material properties
-float Material_Ambient[4] = {0.1f, 0.1f, 0.1f, 1.0f};
-float Material_Diffuse[4] = {0.8f, 0.8f, 0.5f, 1.0f};
-float Material_Specular[4] = {0.9f,0.9f,0.8f,1.0f};
+float Material_Ambient[4] = {0.05f, 0.05f, 0.05f, 1.0f};
+float Material_Diffuse[4] = {0.8f, 0.8f, 0.8f, 1.0f};
+float Material_Specular[4] = {0.9f,0.9f,0.9f,1.0f};
 float Material_Shininess = 100;
 
 //Light Properties
@@ -71,10 +69,9 @@ float Material_Shininess = 100;
 float Light_Ambient_And_Diffuse[4] = { 1.0f, 1.f, 1.f, 1.0f };
 //float Light_Specular[4] = {1.0f,1.0f,1.0f,1.0f};
 float Light_Specular[4] = { 0.1f,0.1f,0.1f,0.1f };
-float LightPos[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-float LightDir[4] = {0.0f,0.0f,0.0f,1.0f};
-//float LightPos[4] = { pos.x, pos.y, pos.z, 0.0f };
-//
+float LightPos[4] = {0.0f,0.0f,0.0f,1.0f};
+float LightPos2[4] = { -137325.0f, 252617.0f, 300889.4f, 0.0f };
+
 
 int	mouse_x=0, mouse_y=0;
 bool LeftPressed = false;
@@ -159,14 +156,14 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
 	
-	LightPos[0] = pos.x - objectRotation[2][0]*5;
-	LightPos[1] = pos.y - objectRotation[2][1]*5;
-	LightPos[2] = pos.z - objectRotation[2][2]*5;
+	//LightPos[0] = pos.x - objectRotation[2][0]*5;
+	//LightPos[1] = pos.y - objectRotation[2][1]*5;
+	//LightPos[2] = pos.z - objectRotation[2][2]*5;
 	
 
 
 	//Passing variables onto shader
-	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightDir"), 1, LightDir);
+	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightPos2"), 1, LightPos2);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightPos"), 1, LightPos);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_ambient"), 1, Light_Ambient_And_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_diffuse"), 1, Light_Ambient_And_Diffuse);
@@ -180,6 +177,9 @@ void display()
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "constantAttenuation"), 0.0000000005f);
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "linearAttenuation"), 0.0000000005f);
 	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "quadraticAttenuation"), 0.0000000005f);
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "constantAttenuation2"), 0.0000000005f);
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "linearAttenuation2"), 0.0000000005f);
+	glUniform1f(glGetUniformLocation(myShader->GetProgramObjID(), "quadraticAttenuation2"), 0.0000000005f);
 
 	//Spaceship rendering
 	glm::mat4 modelmatrix =  glm::translate(glm::mat4(1.0f), pos);
@@ -222,8 +222,14 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	//boxRight.DrawElementsUsingVBO(myBasicShader);
+	boxRight.DrawElementsUsingVBO(myBasicShader);
 
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+
+	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	venusPlanet.DrawElementsUsingVBO(myBasicShader);
 
 	/*
 	std::cout << test << std::endl;
