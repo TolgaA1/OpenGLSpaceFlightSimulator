@@ -70,7 +70,7 @@ float Light_Ambient_And_Diffuse[4] = { 1.0f, 1.f, 1.f, 1.0f };
 //float Light_Specular[4] = {1.0f,1.0f,1.0f,1.0f};
 float Light_Specular[4] = { 0.1f,0.1f,0.1f,0.1f };
 float LightPos[4] = {0.0f,0.0f,0.0f,1.0f};
-float LightPos2[4] = { -137325.0f, 252617.0f, 300889.4f, 0.0f };
+float LightPos2[4] = { -137325.0f, 22617.0f, 300889.4f, 0.0f };
 
 
 int	mouse_x=0, mouse_y=0;
@@ -224,7 +224,7 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	boxRight.DrawElementsUsingVBO(myBasicShader);
 
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(LightPos2[0], LightPos2[1], LightPos2[2]));
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
@@ -299,7 +299,7 @@ void init()
 	objectRotation = glm::mat4(1.0f);
 
 	modelLoader.initModel("TestModels/Sample_Ship.obj", plane,myShader, true);
-	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, false);
+	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, true);
 	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, false);
 	modelLoader.initModel("TestModels/Mercury_1K.obj", mercuryPlanet, myShader, false);
 	modelLoader.initModel("TestModels/boxLeft.obj", testModel, myShader, true);
