@@ -7,7 +7,7 @@
 #include "../Octree/Octree.h"
 #include "../Utilities/IntersectionTests.h"
 #include "../shaders/Shader.h"
-
+#include "./../glm/glm.hpp"
 /*
  *	Method	: ThreeDModel
  *
@@ -839,6 +839,11 @@ void CThreeDModel::DrawOctreeLeaves(CShader* shader)
 	{
 		m_pobOctree->DrawOctreeLeaves(shader);
 	}
+}
+
+bool CThreeDModel::isColliding(glm::vec3 point)
+{
+	return m_pobOctree->isColliding(point);
 }
 /*
  *	Method	: DeleteVertexFaceData

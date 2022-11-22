@@ -12,7 +12,7 @@ in vec3 ex_PositionEye;
 uniform vec4 light_ambient;
 uniform vec4 light_diffuse;
 uniform vec4 light_specular;
-
+uniform vec4 light_diffuse_spaceship;
 uniform vec4 material_ambient;
 uniform vec4 material_diffuse;
 uniform vec4 material_specular;
@@ -59,7 +59,7 @@ void main(void)
                 linearAttenuation * dist +
                 quadraticAttenuation * dist * dist),1);
 
-		color1 = (light_ambient * material_diffuse * NdotL);
+		color1 = (light_diffuse_spaceship * material_diffuse * NdotL);
 	}
 
 	color1 += material_specular * light_specular * pow(RdotV, material_shininess);
@@ -83,6 +83,6 @@ void main(void)
 	}
 	//out_Color = color;  //show just lighting
 
-	//out_Color = texture(DiffuseMap, ex_TexCoord); //show texture only
-    out_Color = color * texture(DiffuseMap, ex_TexCoord); //show texture and lighting
+	out_Color = texture(DiffuseMap, ex_TexCoord); //show texture only
+    //out_Color = color * texture(DiffuseMap, ex_TexCoord); //show texture and lighting
 }

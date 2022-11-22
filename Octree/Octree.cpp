@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 using namespace std;
+#include "./../glm/glm.hpp"
+
 
 #include "Octree.h"
 #include "./../Box/Box.h"
@@ -613,6 +615,39 @@ void COctree::DrawOctreeLeaves(CShader* myShader)
 	}
 }
 
+bool COctree::isColliding(glm::vec3 point)
+{
+	if (m_iLevel >= MAX_DEPTH) //leaf
+	{
+
+		if (((this->m_dMinX < point.x && this->m_dMaxX > point.x) && (this->m_dMinY < point.y && this->m_dMaxY > point.y) && (this->m_dMinZ < point.z && this->m_dMaxZ > point.z))) {
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+		//draw the bounding box for a leaf node.
+
+	}
+	else
+	{
+		//recurse on all the children of the current node
+		for (int i = 0; i < NUM_OF_OCTREE_CHILDREN; i++)
+		{
+			if (m_pobChildren[i] != nullptr) {
+				if (((m_pobChildren[i]->m_dMinX < point.x && m_pobChildren[i]->m_dMaxX > point.x) && (m_pobChildren[i]->m_dMinY < point.y && m_pobChildren[i]->m_dMaxY > point.y) && (m_pobChildren[i]->m_dMinZ < point.z && m_pobChildren[i]->m_dMaxZ > point.z))) {
+					bool isCollidingWithChild = m_pobChildren[i]->isColliding(point);
+					if (isCollidingWithChild)
+						return true;
+
+				}
+			}
+
+		}
+		return false;
+	}
+}
 /*
 *	Method	: CalcVertexNormals
 *

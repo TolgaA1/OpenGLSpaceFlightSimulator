@@ -8,7 +8,7 @@
 
 #include "./../GL/glew.h"
 #include "../Obj/OBJLoader.h"
-
+#include "./../glm/glm.hpp"
 const int NUM_OF_VERTS_IN_TRIANGLE		= 3;
 const int DIMENSION_IN_3D				= 3;
 const int DIMENSION_IN_2D				= 2;
@@ -77,7 +77,7 @@ public:
 	void						DrawBoundingBox(CShader* shader);
 	void						DrawAllBoxesForOctreeNodes(CShader* shader);
 	void						DrawOctreeLeaves(CShader* shader);
-	
+	bool						isColliding(glm::vec3 point);
 	int							GetOctreeTriangleListSize();
 	int							GetOctreeVertexListSize();
 	bool						IsTriangleIntersectingAABB(double boxcenter[DIMENSION_IN_3D],double boxhalfsize[DIMENSION_IN_3D], int PrimIndex);
