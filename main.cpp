@@ -191,10 +191,11 @@ void display()
 	
 	plane.DrawElementsUsingVBO(myShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	plane.DrawOctreeLeaves(myBasicShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	//planeCollisionSphere.render();
-	plane.DrawOctreeLeaves(myBasicShader);
-	plane.CalcBoundingBox(minx, miny, minz, maxx, maxy, maxz);
+
+	//plane.CalcBoundingBox(minx, miny, minz, maxx, maxy, maxz);
 	//Switch to basic shader to draw the lines for the bounding boxes
 	glUseProgram(myBasicShader->GetProgramObjID());
 	projMatLocation = glGetUniformLocation(myBasicShader->GetProgramObjID(), "ProjectionMatrix");
@@ -232,16 +233,19 @@ void display()
 
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	venusPlanet.DrawElementsUsingVBO(myBasicShader);
-	minx += pos.x;
+	/*
+	* 	minx += pos.x;
 	maxx += pos.x;
 	miny += pos.y;
 	maxy += pos.y;
 	minz += pos.z;
 	maxz += pos.z;
+	*/
 
-	std::cout << minx << std::endl;
+
+
 	if (((10 - pos.x)*(10 - pos.x)) + ((20 -pos.y)*(20-pos.y)) +((0 - pos.z)*(0-pos.z)) < (6 + 8) * (6 + 8)) {
-		std::cout << "COLLISION" << std::endl;
+		std::cout << "COLLISIONk" << std::endl;
 	}
 	else
 	{
@@ -251,13 +255,18 @@ void display()
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 	//boxFront.drawElementsUsingVBO(myShader);
-	float x, y, z;
-	x = 0.f;
-	y = 0.8f;
+	double x, y, z;
+	x = 0;
+	y = 0.4;
 	z = 0.9;
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(x, y, z));
+	/*
+	* 	if (((minx < x && maxx > x) && (miny < y && maxy> y) && (minz < z && maxz > z))) {
+		std::cout << "COLLISION" << std::endl;
+	}
+	*/
 
-	if (plane.isColliding(glm::vec3(x, y, z))) {
+	if (plane.isColliding(glm::vec3(0, 0.4, 0.9))) {
 		std::cout << "COLLISION" << std::endl;
 	}
 
@@ -320,7 +329,7 @@ void init()
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
 
 	boxCollisionSphere.setCentre(0, 0, 0);
-	boxCollisionSphere.setRadius(0.5f);
+	boxCollisionSphere.setRadius(0.2f);
 	boxCollisionSphere.constructGeometry(myBasicShader, 16);
 
 	glUseProgram(myBasicShader->GetProgramObjID());  
@@ -483,11 +492,11 @@ void processKeys()
 	//used to be 0.105
 	if (w)
 	{
-		speed += 0.0000105f;
+		speed += 0.000000105f;
 	}
 	if (s)
 	{
-		speed -= 0.0000105f;
+		speed -= 0.000000105f;
 	}
 
 	updateTransform(spinXinc, spinYinc, spinZinc);
