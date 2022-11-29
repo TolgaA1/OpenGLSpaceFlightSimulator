@@ -44,7 +44,7 @@ float temp = 0.002f;
 	
 Sphere planeCollisionSphere;
 Sphere boxCollisionSphere;
-
+Sphere marsCollisionSphere;
 CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront, AIShip;
 CThreeDModel plane; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
@@ -224,11 +224,19 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	venusPlanet.DrawElementsUsingVBO(myShader);
-	marsPlanet.DrawElementsUsingVBO(myShader);
+
 	mercuryPlanet.DrawElementsUsingVBO(myShader);
 	//testModel.DrawElementsUsingVBO(myShader);
 	//testModel.CalcBoundingBox(minx, miny, minz, maxx, maxy, maxz);
 	//venusPlanet.CalcBoundingBox(minx,miny,minz,maxx,maxy,maxz);
+	
+	//PLANET CENTERING
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(105104, 24994.3f, 46772.4));
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	marsPlanet.DrawElementsUsingVBO(myShader);
+
 
 	glUseProgram(myBasicShader->GetProgramObjID());  // use the shader
 
@@ -245,6 +253,17 @@ void display()
 
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	venusPlanet.DrawElementsUsingVBO(myBasicShader);
+
+
+
+	//PLANET COLLISION BOX SPHERES
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(105104, 24994.3f, 46772.4));
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+
+	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	marsCollisionSphere.render();
+
 
 
 	glUseProgram(myShader->GetProgramObjID());
@@ -289,6 +308,8 @@ void display()
 	if (plane.isColliding(glm::vec3(bob))) {
 		std::cout << "COLLISION" << std::endl;
 	}
+	//if(plane.isColliding(marsCollisionSphere.getRadius(),glm::vec3(105104, 24994.3f, 46772.4)))
+
 
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
@@ -341,10 +362,10 @@ void display()
 	AIShipPosX = 1.1f;
 	AIShipPosY = 0.4f;
 	AIShipPosZ += 0.0005f;
-	AIPos.x += 0.00105f * AIShipRotation[2][0];
-	AIPos.y += 0.00105f * AIShipRotation[2][1];
-	AIPos.z += 0.00105f * AIShipRotation[2][2];
-	AIShipRotation = glm::rotate(AIShipRotation, 0.000015f, glm::vec3(0, 1, 0));
+	AIPos.x += 0.0105f * AIShipRotation[2][0];
+	AIPos.y += 0.0105f * AIShipRotation[2][1];
+	AIPos.z += 0.0105f * AIShipRotation[2][2];
+	AIShipRotation = glm::rotate(AIShipRotation, 0.00015f, glm::vec3(0, 1, 0));
 	glm::mat4 AImodelmatrix = glm::translate(glm::mat4(1.0f), AIPos);
 
 	ModelViewMatrix = viewingMatrix * AImodelmatrix * AIShipRotation;
@@ -397,13 +418,18 @@ void init()
 	AIShipRotation = glm::mat4(1.0f);
 	modelLoader.initModel("TestModels/otherSpaceship.obj", plane,myShader, true);
 	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, true);
-	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, false);
+	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, true);
 	modelLoader.initModel("TestModels/Mercury_1K.obj", mercuryPlanet, myShader, false);
 	modelLoader.initModel("TestModels/Sample_Ship.obj", AIShip, myShader, true);
 	modelLoader.initModel("TestModels/boxRight.obj", boxFront, myShader, true);
+
 	planeCollisionSphere.setCentre(0, 0, 0);
 	planeCollisionSphere.setRadius(1);
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
+	
+	marsCollisionSphere.setCentre(0, 0, 0);
+	marsCollisionSphere.setRadius(27500);
+	marsCollisionSphere.constructGeometry(myBasicShader, 17);
 
 	boxCollisionSphere.setCentre(0, 0, 0);
 	boxCollisionSphere.setRadius(0.05f);
@@ -533,20 +559,21 @@ void processKeys()
 	//used to be 0.015
 	if (Left)
 	{
-		spinYinc = 0.00015f;
+		//used to be 0.00015
+		spinYinc = 0.0015f;
 
 	}
 	if (Right)
 	{
-		spinYinc = -0.00015f;
+		spinYinc = -0.0015f;
 	}
 	if (Up)
 	{
-		spinXinc = 0.00015f;
+		spinXinc = 0.0015f;
 	}
 	if (Down)
 	{
-		spinXinc = -0.00015f;
+		spinXinc = -0.0015f;
 	}
 	if (q)
 	{
@@ -571,11 +598,11 @@ void processKeys()
 	//used to be 0.105
 	if (w)
 	{
-		speed += 0.00000105f;
+		speed += 0.00105f;
 	}
 	if (s)
 	{
-		speed -= 0.00000105f;
+		speed -= 0.00105f;
 	}
 
 	updateTransform(spinXinc, spinYinc, spinZinc);

@@ -9,6 +9,7 @@ using namespace std;
 #include "./../Box/Box.h"
 #include "../3DStruct/threeDModel.h"
 
+
 const int FACE_LIMIT = 1;
 
 /*
@@ -654,6 +655,94 @@ bool COctree::isColliding(glm::vec3 point)
 		return false;
 	}
 }
+
+bool COctree::isColliding(double radius, glm::vec3 centerPoint, glm::vec3 AABBCenter)
+{
+
+
+	if (m_iLevel >= MAX_DEPTH) //leaf
+	{
+		double halfWidthX = this->m_dMaxX - this->m_dMinX;
+		double halfWidthY = this->m_dMaxY - this->m_dMinY;
+		double halfWidthZ = this->m_dMaxZ - this->m_dMinZ;
+		glm::vec3 aabb_half(halfWidthX, halfWidthY, halfWidthZ);
+		glm::vec3 difference = centerPoint - AABBCenter;
+		glm::vec3 clamped = glm::clamp(difference, -aabb_half, aabb_half);
+		glm::vec3 closest = AABBCenter + clamped;
+		difference = closest - centerPoint;
+
+		return glm::length(difference) < radius;
+		//draw the bounding box for a leaf node.
+	}
+	else
+	{
+		//recurse on all the children of the current node
+		for (int i = 0; i < NUM_OF_OCTREE_CHILDREN; i++)
+		{
+			if (m_pobChildren[i] != nullptr) {
+
+				double halfWidthX = m_pobChildren[i]->m_dMaxX - m_pobChildren[i]->m_dMinX;
+				double halfWidthY = m_pobChildren[i]->m_dMaxY - m_pobChildren[i]->m_dMinY;
+				double halfWidthZ = m_pobChildren[i]->m_dMaxZ - m_pobChildren[i]->m_dMinZ;
+				glm::vec3 aabb_half(halfWidthX, halfWidthY, halfWidthZ);
+				glm::vec3 difference = centerPoint - AABBCenter;
+				glm::vec3 clamped = glm::clamp(difference, -aabb_half, aabb_half);
+				glm::vec3 closest = AABBCenter + clamped;
+				difference = closest - centerPoint;
+
+				if (glm::length(difference) < radius)
+				{
+					bool isCollidingWithChild = m_pobChildren[i]->isColliding(radius, centerPoint, AABBCenter);
+					if (isCollidingWithChild)
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+}
+/*
+
+
+	if (m_iLevel >= MAX_DEPTH) //leaf
+	{
+		//std::cout << point.y << std::endl;
+		//(this->m_dMinX < point.x && this->m_dMaxX > point.x) && (this->m_dMinY < point.y&& this->m_dMaxY > point.y) && (this->m_dMinZ < point.z&& this->m_dMaxZ > point.z))
+		//std::cout << this->m_dMaxX << std::endl;
+		if ((this->m_dMinX < point.x && this->m_dMaxX > point.x) && (this->m_dMinY < point.y && this->m_dMaxY > point.y) && (this->m_dMinZ < point.z && this->m_dMaxZ > point.z)) {
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+		//draw the bounding box for a leaf node.
+	}
+	else
+	{
+		//recurse on all the children of the current node
+		for (int i = 0; i < NUM_OF_OCTREE_CHILDREN; i++)
+		{
+			if (m_pobChildren[i] != nullptr) {
+
+				if (((m_pobChildren[i]->m_dMinX < point.x && m_pobChildren[i]->m_dMaxX > point.x) && (m_pobChildren[i]->m_dMinY < point.y && m_pobChildren[i]->m_dMaxY > point.y) && (m_pobChildren[i]->m_dMinZ < point.z && m_pobChildren[i]->m_dMaxZ > point.z))) {
+					bool isCollidingWithChild = m_pobChildren[i]->isColliding(point);
+					if (isCollidingWithChild)
+						return true;
+				}
+
+			}
+
+		}
+		return false;
+	}
+
+
+*/
+
 /*
 *	Method	: CalcVertexNormals
 *

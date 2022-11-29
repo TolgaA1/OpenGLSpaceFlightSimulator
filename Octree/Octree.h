@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "./../glm/glm.hpp"
+#include "../Sphere/Sphere.h"
 /*
 *	Class	: Octree
 *
@@ -45,4 +46,6 @@ public:
 	void			DrawAllBoxes(CShader* myShader);
 	void			DrawOctreeLeaves(CShader* myShader);
 	bool			isColliding(glm::vec3 point);
+	bool			isColliding(double radius, glm::vec3 centerPoint, glm::vec3 AABBCenter);
+
 };

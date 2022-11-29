@@ -8,6 +8,7 @@
 #include "../Utilities/IntersectionTests.h"
 #include "../shaders/Shader.h"
 #include "./../glm/glm.hpp"
+
 /*
  *	Method	: ThreeDModel
  *
@@ -844,6 +845,11 @@ void CThreeDModel::DrawOctreeLeaves(CShader* shader)
 bool CThreeDModel::isColliding(glm::vec3 point)
 {
 	return m_pobOctree->isColliding(point);
+}
+
+bool CThreeDModel::isColliding(double radius, glm::vec3 centerPoint, glm::vec3 AABBCenter)
+{
+	return m_pobOctree->isColliding(radius,centerPoint,AABBCenter);
 }
 /*
  *	Method	: DeleteVertexFaceData
