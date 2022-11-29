@@ -39,13 +39,13 @@ CShader* myBasicShader;
 #include "3DStruct\threeDModel.h"
 #include "Obj\OBJLoader.h"
 
-float amount = 0;
+float amount = 0.001;
 float temp = 0.002f;
 	
 Sphere planeCollisionSphere;
 Sphere boxCollisionSphere;
 
-CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront, testModel;
+CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront, AIShip;
 CThreeDModel plane; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ModelLoader modelLoader;
@@ -54,10 +54,10 @@ ModelLoader modelLoader;
 glm::mat4 ProjectionMatrix; // matrix for the orthographic projection
 glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
 
-glm::mat4 objectRotation;
+glm::mat4 objectRotation,AIShipRotation;
 glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 pos = glm::vec3(0.0f,0.0f,0.0f); //vector for the position of the object.
-
+glm::vec3 AIPos = glm::vec3{ 0.0f,0.0f,0.0f };
 //Material properties
 float Material_Ambient[4] = {0.05f, 0.05f, 0.05f, 1.0f};
 float Material_Diffuse[4] = {0.8f, 0.8f, 0.8f, 1.0f};
@@ -78,6 +78,7 @@ bool LeftPressed = false;
 
 bool isCockpitView = true;
 bool isThirdpersonView = false;
+bool isEnvironmentView = false;
 bool isPlanetView = false;
 int screenWidth=600, screenHeight=600;
 
@@ -97,7 +98,7 @@ bool s = false;
 bool v = false;
 
 double minx = 0, miny = 0, minz = 0, maxx = 0, maxy = 0, maxz = 0;
-
+float AIShipPosX, AIShipPosY, AIShipPosZ;
 float spin=180;
 float speed=0;
 
@@ -143,15 +144,24 @@ void display()
 	pos.z += objectRotation[2][2]* speed;
 
 	//Camera view toggling.
-	if (isCockpitView)
+	if (isEnvironmentView)
 	{
-		viewingMatrix = glm::lookAt(glm::vec3(pos.x, pos.y, pos.z), glm::vec3(pos.x + objectRotation[2][0], pos.y + objectRotation[2][1], pos.z + objectRotation[2][2]), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
+		viewingMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,0.0f));
+		//viewingMatrix = glm::lookAt(glm::vec3(pos.x, pos.y, pos.z), glm::vec3(pos.x, pos.y, pos.z), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
 	}
-	else if (isThirdpersonView)
+	else
 	{
-		glm::vec3 direction = glm::normalize(glm::vec3(objectRotation[2][0], objectRotation[2][1], objectRotation[2][2]));
-		viewingMatrix = glm::lookAt(glm::vec3(pos.x - direction.x * 15,pos.y - direction.y * 15,pos.z- direction.z *15), glm::vec3(pos.x, pos.y, pos.z), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
+		if (isCockpitView)
+		{
+			viewingMatrix = glm::lookAt(glm::vec3(pos.x, pos.y, pos.z), glm::vec3(pos.x + objectRotation[2][0], pos.y + objectRotation[2][1], pos.z + objectRotation[2][2]), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
+		}
+		else if (isThirdpersonView)
+		{
+			glm::vec3 direction = glm::normalize(glm::vec3(objectRotation[2][0], objectRotation[2][1], objectRotation[2][2]));
+			viewingMatrix = glm::lookAt(glm::vec3(pos.x - direction.x * 15, pos.y - direction.y * 15, pos.z - direction.z * 15), glm::vec3(pos.x, pos.y, pos.z), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
+		}
 	}
+
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
@@ -193,6 +203,8 @@ void display()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	plane.DrawOctreeLeaves(myBasicShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+
 	//planeCollisionSphere.render();
 
 	//plane.CalcBoundingBox(minx, miny, minz, maxx, maxy, maxz);
@@ -233,6 +245,9 @@ void display()
 
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	venusPlanet.DrawElementsUsingVBO(myBasicShader);
+
+
+	glUseProgram(myShader->GetProgramObjID());
 	/*
 	* 	minx += pos.x;
 	maxx += pos.x;
@@ -243,8 +258,8 @@ void display()
 	*/
 
 
-
-	if (((10 - pos.x)*(10 - pos.x)) + ((20 -pos.y)*(20-pos.y)) +((0 - pos.z)*(0-pos.z)) < (6 + 8) * (6 + 8)) {
+	/*
+	* 	if (((10 - pos.x)*(10 - pos.x)) + ((20 -pos.y)*(20-pos.y)) +((0 - pos.z)*(0-pos.z)) < (6 + 8) * (6 + 8)) {
 		std::cout << "COLLISIONk" << std::endl;
 	}
 	else
@@ -254,11 +269,16 @@ void display()
 		boxCollisionSphere.render();
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
+	*/
+
 	//boxFront.drawElementsUsingVBO(myShader);
 	double x, y, z;
 	x = 0;
 	y = 0.4;
 	z = 0.9;
+	glm::vec4 bob = glm::inverse(modelmatrix * objectRotation) * glm::vec4(x, y, z, 1);
+	//glm::vec4 bob = glm::vec4(x,y,z,1) * glm::inverse(modelmatrix*objectRotation);
+
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(x, y, z));
 	/*
 	* 	if (((minx < x && maxx > x) && (miny < y && maxy> y) && (minz < z && maxz > z))) {
@@ -266,7 +286,7 @@ void display()
 	}
 	*/
 
-	if (plane.isColliding(glm::vec3(0, 0.4, 0.9))) {
+	if (plane.isColliding(glm::vec3(bob))) {
 		std::cout << "COLLISION" << std::endl;
 	}
 
@@ -275,7 +295,64 @@ void display()
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	boxCollisionSphere.render();
+
+
+	/*
+	* FOR ROTATION USE AS REFERENCE
+	* glm::mat4 AImodelmatrix =  glm::translate(glm::mat4(1.0f), AIShipPosX,AIShipPosY,AIShipPosZ);
+	ModelViewMatrix = viewingMatrix * AImodelmatrix * AIShipRotation;
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	*/
+
+	/*
+		AIShipRotation = glm::rotate(AIShipRotation, 0.0015f, glm::vec3(0, 0, 1));
+	AIShipPosX = 1.1f;
+	AIShipPosY = 0.4f;
+	AIShipPosZ += 0.0005f;
+	AIPos.x = 0.01f*AIShipRotation[2][0];
+	AIPos.y = 0.01f*AIShipRotation[2][1];
+	AIPos.z = 0.01f*AIShipRotation[2][2];
+	glm::mat4 AImodelmatrix = glm::translate(glm::mat4(1.0f), AIPos);
+
+	ModelViewMatrix = viewingMatrix * AImodelmatrix * AIShipRotation;
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	AIShip.DrawElementsUsingVBO(myShader);
+	*/
+
+
+	/*
+	* 	pos.x += objectRotation[2][0] * speed;
+	pos.y += objectRotation[2][1] * speed;
+	pos.z += objectRotation[2][2] * speed;
+	* 	//ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(AIShipPosX, AIShipPosY, AIShipPosZ));
+	AIShipRotation = glm::rotate(objectRotation, 0.0015f, glm::vec3(1, 0, 0));
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	AIShip.DrawElementsUsingVBO(myShader);
+	*/
+
 	
+	AIShipPosX = 1.1f;
+	AIShipPosY = 0.4f;
+	AIShipPosZ += 0.0005f;
+	AIPos.x += 0.00105f * AIShipRotation[2][0];
+	AIPos.y += 0.00105f * AIShipRotation[2][1];
+	AIPos.z += 0.00105f * AIShipRotation[2][2];
+	AIShipRotation = glm::rotate(AIShipRotation, 0.000015f, glm::vec3(0, 1, 0));
+	glm::mat4 AImodelmatrix = glm::translate(glm::mat4(1.0f), AIPos);
+
+	ModelViewMatrix = viewingMatrix * AImodelmatrix * AIShipRotation;
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	AIShip.DrawElementsUsingVBO(myShader);
+
 	glFlush();
 	glutSwapBuffers();
 }
@@ -317,19 +394,19 @@ void init()
 	glEnable(GL_TEXTURE_2D);
 
 	objectRotation = glm::mat4(1.0f);
-
-	modelLoader.initModel("TestModels/Sample_Ship.obj", plane,myShader, true);
+	AIShipRotation = glm::mat4(1.0f);
+	modelLoader.initModel("TestModels/otherSpaceship.obj", plane,myShader, true);
 	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, true);
 	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, false);
 	modelLoader.initModel("TestModels/Mercury_1K.obj", mercuryPlanet, myShader, false);
-	modelLoader.initModel("TestModels/otherSpaceship.obj", testModel, myShader, true);
+	modelLoader.initModel("TestModels/Sample_Ship.obj", AIShip, myShader, true);
 	modelLoader.initModel("TestModels/boxRight.obj", boxFront, myShader, true);
 	planeCollisionSphere.setCentre(0, 0, 0);
 	planeCollisionSphere.setRadius(1);
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
 
 	boxCollisionSphere.setCentre(0, 0, 0);
-	boxCollisionSphere.setRadius(0.2f);
+	boxCollisionSphere.setRadius(0.05f);
 	boxCollisionSphere.constructGeometry(myBasicShader, 16);
 
 	glUseProgram(myBasicShader->GetProgramObjID());  
@@ -388,6 +465,8 @@ void keyboard(unsigned char key, int x, int y)
 		isThirdpersonView = !isThirdpersonView;
 		isCockpitView = !isCockpitView;
 		break;
+	case 'b':
+		isEnvironmentView = !isEnvironmentView;
 	case 'w':
 		w = true;
 		break;
@@ -492,11 +571,11 @@ void processKeys()
 	//used to be 0.105
 	if (w)
 	{
-		speed += 0.000000105f;
+		speed += 0.00000105f;
 	}
 	if (s)
 	{
-		speed -= 0.000000105f;
+		speed -= 0.00000105f;
 	}
 
 	updateTransform(spinXinc, spinYinc, spinZinc);

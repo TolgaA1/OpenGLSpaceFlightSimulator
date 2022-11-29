@@ -17,8 +17,10 @@ out vec3 ex_PositionEye;
 out vec3 ex_LightPos; 
 out vec3 ex_LightDir;
 
+
 void main(void)
 {
+
 	gl_Position = ProjectionMatrix * ModelViewMatrix * vec4(in_Position, 1.0);
 	
 	ex_TexCoord = in_TexCoord;
