@@ -79,7 +79,7 @@ public:
 	void						DrawAllBoxesForOctreeNodes(CShader* shader);
 	void						DrawOctreeLeaves(CShader* shader);
 	bool						isColliding(glm::vec3 point);
-	bool						isColliding(double radius, glm::vec3 centerPoint, glm::vec3 AABBCenter);
+	bool						isColliding(float radius, glm::vec3 centerPoint, glm::vec3 AABBCenter);
 	int							GetOctreeTriangleListSize();
 	int							GetOctreeVertexListSize();
 	bool						IsTriangleIntersectingAABB(double boxcenter[DIMENSION_IN_3D],double boxhalfsize[DIMENSION_IN_3D], int PrimIndex);

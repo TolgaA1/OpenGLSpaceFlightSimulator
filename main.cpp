@@ -520,6 +520,8 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case 'b':
 		isEnvironmentView = !isEnvironmentView;
+	case 'f':
+		speed = 0;
 	case 'w':
 		w = true;
 		break;

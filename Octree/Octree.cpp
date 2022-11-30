@@ -656,19 +656,26 @@ bool COctree::isColliding(glm::vec3 point)
 	}
 }
 
-bool COctree::isColliding(double radius, glm::vec3 centerPoint, glm::vec3 AABBCenter)
+bool COctree::isColliding(float radius, glm::vec3 centerPoint, glm::vec3 AABBCenter)
 {
 
 
 	if (m_iLevel >= MAX_DEPTH) //leaf
 	{
+		glm::vec3 center(centerPoint + radius);
 		double halfWidthX = this->m_dMaxX - this->m_dMinX;
 		double halfWidthY = this->m_dMaxY - this->m_dMinY;
 		double halfWidthZ = this->m_dMaxZ - this->m_dMinZ;
 		glm::vec3 aabb_half(halfWidthX, halfWidthY, halfWidthZ);
-		glm::vec3 difference = centerPoint - AABBCenter;
+		glm::vec3 aabb_center(
+			AABBCenter.x + aabb_half.x,
+			AABBCenter.y + aabb_half.y,
+			AABBCenter.z + aabb_half.z
+
+		);
+		glm::vec3 difference = centerPoint - aabb_center;
 		glm::vec3 clamped = glm::clamp(difference, -aabb_half, aabb_half);
-		glm::vec3 closest = AABBCenter + clamped;
+		glm::vec3 closest = aabb_center + clamped;
 		difference = closest - centerPoint;
 
 		return glm::length(difference) < radius;
@@ -685,14 +692,20 @@ bool COctree::isColliding(double radius, glm::vec3 centerPoint, glm::vec3 AABBCe
 				double halfWidthY = m_pobChildren[i]->m_dMaxY - m_pobChildren[i]->m_dMinY;
 				double halfWidthZ = m_pobChildren[i]->m_dMaxZ - m_pobChildren[i]->m_dMinZ;
 				glm::vec3 aabb_half(halfWidthX, halfWidthY, halfWidthZ);
-				glm::vec3 difference = centerPoint - AABBCenter;
+				glm::vec3 aabb_center(
+					AABBCenter.x + aabb_half.x,
+					AABBCenter.y + aabb_half.y,
+					AABBCenter.z + aabb_half.z
+
+				);
+				glm::vec3 difference = centerPoint - aabb_center;
 				glm::vec3 clamped = glm::clamp(difference, -aabb_half, aabb_half);
-				glm::vec3 closest = AABBCenter + clamped;
+				glm::vec3 closest = aabb_center + clamped;
 				difference = closest - centerPoint;
 
 				if (glm::length(difference) < radius)
 				{
-					bool isCollidingWithChild = m_pobChildren[i]->isColliding(radius, centerPoint, AABBCenter);
+					bool isCollidingWithChild = m_pobChildren[i]->isColliding(radius, centerPoint, aabb_center);
 					if (isCollidingWithChild)
 					{
 						return true;
