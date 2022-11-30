@@ -207,7 +207,7 @@ void display()
 
 	//planeCollisionSphere.render();
 
-	//plane.CalcBoundingBox(minx, miny, minz, maxx, maxy, maxz);
+	plane.CalcBoundingBox(minx, miny, minz, maxx, maxy, maxz);
 	//Switch to basic shader to draw the lines for the bounding boxes
 	glUseProgram(myBasicShader->GetProgramObjID());
 	projMatLocation = glGetUniformLocation(myBasicShader->GetProgramObjID(), "ProjectionMatrix");
@@ -267,14 +267,15 @@ void display()
 
 
 	glUseProgram(myShader->GetProgramObjID());
-	/*
-	* 	minx += pos.x;
+	
+
+	minx += pos.x;
 	maxx += pos.x;
 	miny += pos.y;
 	maxy += pos.y;
 	minz += pos.z;
 	maxz += pos.z;
-	*/
+	
 
 
 	/*
@@ -291,24 +292,50 @@ void display()
 	*/
 
 	//boxFront.drawElementsUsingVBO(myShader);
-	double x, y, z;
+	/*
+	* 	double x, y, z;
 	x = 0;
 	y = 0.4;
 	z = 0.9;
+	*/
+	double x, y, z;
+	x = 105104;
+	y = 24994.3f;
+	z = 46772.4;
 	glm::vec4 bob = glm::inverse(modelmatrix * objectRotation) * glm::vec4(x, y, z, 1);
 	//glm::vec4 bob = glm::vec4(x,y,z,1) * glm::inverse(modelmatrix*objectRotation);
 
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(x, y, z));
 	/*
-	* 	if (((minx < x && maxx > x) && (miny < y && maxy> y) && (minz < z && maxz > z))) {
-		std::cout << "COLLISION" << std::endl;
+		double halfWidthX = maxx - minx;
+	double halfWidthY = maxy - miny;
+	double halfWidthZ = maxz - minz;
+	glm::vec3 aabb_half(halfWidthX, halfWidthY, halfWidthZ);
+	glm::vec3 difference = glm::vec3(x,y,z) - pos;
+	glm::vec3 clamped = glm::clamp(difference, -aabb_half, aabb_half);
+	glm::vec3 closest = pos + clamped;
+	difference = closest - glm::vec3(x, y, z);
+	if (glm::length(difference) < marsCollisionSphere.getRadius())
+	{
+		std::cout << "COLLISIONBOUNDINGSPEHERE" << std::endl;
 	}
 	*/
 
-	if (plane.isColliding(glm::vec3(bob))) {
+	if (((minx < x && maxx > x) && (miny < y && maxy> y) && (minz < z && maxz > z))) {
+		std::cout << "COLLISIONBOUNDING" << std::endl;
+	}
+
+	/*
+	* 	if (plane.isColliding(glm::vec3(bob))) {
 		std::cout << "COLLISION" << std::endl;
 	}
-	//if(plane.isColliding(marsCollisionSphere.getRadius(),glm::vec3(105104, 24994.3f, 46772.4)))
+	*/
+	//if ti works add distance check
+	if (plane.isColliding(marsCollisionSphere.getRadius(), glm::vec3(105104,24994.3f, 46772.4), pos))
+	{
+		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
+	}
+
 
 
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
@@ -416,7 +443,7 @@ void init()
 
 	objectRotation = glm::mat4(1.0f);
 	AIShipRotation = glm::mat4(1.0f);
-	modelLoader.initModel("TestModels/otherSpaceship.obj", plane,myShader, true);
+	modelLoader.initModel("TestModels/Sample_Ship.obj", plane,myShader, true);
 	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, true);
 	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, true);
 	modelLoader.initModel("TestModels/Mercury_1K.obj", mercuryPlanet, myShader, false);
@@ -428,7 +455,7 @@ void init()
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
 	
 	marsCollisionSphere.setCentre(0, 0, 0);
-	marsCollisionSphere.setRadius(27500);
+	marsCollisionSphere.setRadius(27050);
 	marsCollisionSphere.constructGeometry(myBasicShader, 17);
 
 	boxCollisionSphere.setCentre(0, 0, 0);
@@ -560,28 +587,28 @@ void processKeys()
 	if (Left)
 	{
 		//used to be 0.00015
-		spinYinc = 0.0015f;
+		spinYinc = 0.015f;
 
 	}
 	if (Right)
 	{
-		spinYinc = -0.0015f;
+		spinYinc = -0.015f;
 	}
 	if (Up)
 	{
-		spinXinc = 0.0015f;
+		spinXinc = 0.015f;
 	}
 	if (Down)
 	{
-		spinXinc = -0.0015f;
+		spinXinc = -0.015f;
 	}
 	if (q)
 	{
-		spinZinc = 0.0005f;
+		spinZinc = 0.015f;
 	}
 	if (e)
 	{
-		spinZinc = -0.0005f;
+		spinZinc = -0.015f;
 	}
 	if (o)
 	{
@@ -598,11 +625,11 @@ void processKeys()
 	//used to be 0.105
 	if (w)
 	{
-		speed += 0.00105f;
+		speed += 1.05f;
 	}
 	if (s)
 	{
-		speed -= 0.00105f;
+		speed -= 1.05f;
 	}
 
 	updateTransform(spinXinc, spinYinc, spinZinc);
