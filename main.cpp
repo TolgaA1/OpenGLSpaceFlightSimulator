@@ -57,6 +57,7 @@ glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
 glm::mat4 objectRotation,AIShipRotation;
 glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 pos = glm::vec3(0.0f,0.0f,0.0f); //vector for the position of the object.
+glm::vec3 tempPos = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 AIPos = glm::vec3{ 0.0f,0.0f,0.0f };
 //Material properties
 float Material_Ambient[4] = {0.05f, 0.05f, 0.05f, 1.0f};
@@ -307,6 +308,8 @@ void display()
 
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(x, y, z));
 	/*
+	
+	
 		double halfWidthX = maxx - minx;
 	double halfWidthY = maxy - miny;
 	double halfWidthZ = maxz - minz;
@@ -319,7 +322,11 @@ void display()
 	{
 		std::cout << "COLLISIONBOUNDINGSPEHERE" << std::endl;
 	}
+	
+	
 	*/
+
+	
 
 	if (((minx < x && maxx > x) && (miny < y && maxy> y) && (minz < z && maxz > z))) {
 		std::cout << "COLLISIONBOUNDING" << std::endl;
@@ -331,10 +338,16 @@ void display()
 	}
 	*/
 	//if ti works add distance check
-	if (plane.isColliding(marsCollisionSphere.getRadius(), glm::vec3(105104,24994.3f, 46772.4), pos))
+	/*
+	
+
+	*/
+	if (plane.isColliding(marsCollisionSphere.getRadius(), glm::vec3(105104, 24994.3f, 46772.4), pos))
 	{
 		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
+		//pos = tempPos;
 	}
+
 
 
 
@@ -456,7 +469,7 @@ void init()
 	
 	marsCollisionSphere.setCentre(0, 0, 0);
 	marsCollisionSphere.setRadius(27050);
-	marsCollisionSphere.constructGeometry(myBasicShader, 17);
+	marsCollisionSphere.constructGeometry(myBasicShader, 20);
 
 	boxCollisionSphere.setCentre(0, 0, 0);
 	boxCollisionSphere.setRadius(0.05f);

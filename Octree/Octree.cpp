@@ -656,7 +656,7 @@ bool COctree::isColliding(glm::vec3 point)
 	}
 }
 
-bool COctree::isColliding(float radius, glm::vec3 centerPoint, glm::vec3 AABBCenter)
+bool COctree::isColliding(float radius, glm::vec3 centerPoint, glm::vec3& AABBCenter)
 {
 
 
@@ -677,8 +677,19 @@ bool COctree::isColliding(float radius, glm::vec3 centerPoint, glm::vec3 AABBCen
 		glm::vec3 clamped = glm::clamp(difference, -aabb_half, aabb_half);
 		glm::vec3 closest = aabb_center + clamped;
 		difference = closest - centerPoint;
+		float fOverlap = radius - glm::length(difference);
+		std::cout << fOverlap << std::endl;
 
-		return glm::length(difference) < radius;
+		if (fOverlap > 0)
+		{
+			//AABBCenter = AABBCenter - glm::normalize(difference) * fOverlap;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+		//return glm::length(difference) < radius;
 		//draw the bounding box for a leaf node.
 	}
 	else
@@ -702,13 +713,21 @@ bool COctree::isColliding(float radius, glm::vec3 centerPoint, glm::vec3 AABBCen
 				glm::vec3 clamped = glm::clamp(difference, -aabb_half, aabb_half);
 				glm::vec3 closest = aabb_center + clamped;
 				difference = closest - centerPoint;
+				float fOverlap = radius - glm::length(difference);
 
-				if (glm::length(difference) < radius)
+				
+				if (fOverlap > 0)
 				{
+					//AABBCenter.x = 0;
 					bool isCollidingWithChild = m_pobChildren[i]->isColliding(radius, centerPoint, aabb_center);
 					if (isCollidingWithChild)
 					{
+						//glm::vec3 rayToNearest = closest
+
+						std::cout << fOverlap << std::endl;
+						//AABBCenter = AABBCenter - glm::normalize(difference) * fOverlap;
 						return true;
+						
 					}
 				}
 			}
