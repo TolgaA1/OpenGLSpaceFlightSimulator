@@ -847,9 +847,9 @@ bool CThreeDModel::isColliding(glm::vec3 point)
 	return m_pobOctree->isColliding(point);
 }
 
-bool CThreeDModel::isColliding(float radius, glm::vec3 centerPoint, glm::vec3& AABBCenter)
+bool CThreeDModel::isColliding(float radius, glm::vec3 centerPoint, glm::vec3& AABBCenter, float& speed)
 {
-	return m_pobOctree->isColliding(radius,centerPoint,AABBCenter);
+	return m_pobOctree->isColliding(radius,centerPoint,AABBCenter, speed);
 }
 /*
  *	Method	: DeleteVertexFaceData

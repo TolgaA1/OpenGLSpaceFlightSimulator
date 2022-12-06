@@ -45,6 +45,7 @@ float temp = 0.002f;
 Sphere planeCollisionSphere;
 Sphere boxCollisionSphere;
 Sphere marsCollisionSphere;
+Sphere spaceShipLandingSphere;
 CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront, AIShip;
 CThreeDModel plane; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
@@ -81,6 +82,7 @@ bool isCockpitView = true;
 bool isThirdpersonView = false;
 bool isEnvironmentView = false;
 bool isPlanetView = false;
+bool isKnockedBack = false;
 int screenWidth=600, screenHeight=600;
 
 //booleans to handle when the arrow keys are pressed or released. TEST
@@ -204,7 +206,7 @@ void display()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	plane.DrawOctreeLeaves(myBasicShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+	spaceShipLandingSphere.render();
 
 	//planeCollisionSphere.render();
 
@@ -342,12 +344,34 @@ void display()
 	
 
 	*/
-	if (plane.isColliding(marsCollisionSphere.getRadius(), glm::vec3(105104, 24994.3f, 46772.4), pos))
+	//if speed to fast make spaceship bounce and dmg spaceship
+	if (plane.isColliding(marsCollisionSphere.getRadius(), glm::vec3(105104, 24994.3f, 46772.4), pos,speed))
 	{
 		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
+		pos = tempPos;
+		speed = -speed*0.85f;
+		isKnockedBack = true;
 		//pos = tempPos;
 	}
-
+	else
+	{
+		tempPos = pos;
+	}
+	if (isKnockedBack)
+	{
+		if (speed > 1)
+		{
+			speed -= 0.01f;
+		}
+		else if (speed < -1)
+		{
+			speed += 0.01f;
+		}
+		else
+		{
+			isKnockedBack = false;
+		}
+	}
 
 
 
@@ -456,7 +480,7 @@ void init()
 
 	objectRotation = glm::mat4(1.0f);
 	AIShipRotation = glm::mat4(1.0f);
-	modelLoader.initModel("TestModels/Sample_Ship.obj", plane,myShader, true);
+	modelLoader.initModel("TestModels/otherSpaceship.obj", plane,myShader, true);
 	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, true);
 	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, true);
 	modelLoader.initModel("TestModels/Mercury_1K.obj", mercuryPlanet, myShader, false);
@@ -468,12 +492,16 @@ void init()
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
 	
 	marsCollisionSphere.setCentre(0, 0, 0);
-	marsCollisionSphere.setRadius(27050);
-	marsCollisionSphere.constructGeometry(myBasicShader, 20);
+	marsCollisionSphere.setRadius(27020);
+	marsCollisionSphere.constructGeometry(myBasicShader, 50);
 
 	boxCollisionSphere.setCentre(0, 0, 0);
 	boxCollisionSphere.setRadius(0.05f);
 	boxCollisionSphere.constructGeometry(myBasicShader, 16);
+
+	spaceShipLandingSphere.setCentre(0, 0, 0);
+	spaceShipLandingSphere.setRadius(5.0f);
+	spaceShipLandingSphere.constructGeometry(myBasicShader, 16);
 
 	glUseProgram(myBasicShader->GetProgramObjID());  
 	glEnable(GL_TEXTURE_2D);
@@ -602,20 +630,20 @@ void processKeys()
 	if (Left)
 	{
 		//used to be 0.00015
-		spinYinc = 0.015f;
+		spinYinc = 0.0015f;
 
 	}
 	if (Right)
 	{
-		spinYinc = -0.015f;
+		spinYinc = -0.0015f;
 	}
 	if (Up)
 	{
-		spinXinc = 0.015f;
+		spinXinc = 0.0015f;
 	}
 	if (Down)
 	{
-		spinXinc = -0.015f;
+		spinXinc = -0.0015f;
 	}
 	if (q)
 	{
@@ -640,11 +668,11 @@ void processKeys()
 	//used to be 0.105
 	if (w)
 	{
-		speed += 1.05f;
+		speed += 0.0105f;
 	}
 	if (s)
 	{
-		speed -= 1.05f;
+		speed -= 0.0105f;
 	}
 
 	updateTransform(spinXinc, spinYinc, spinZinc);
