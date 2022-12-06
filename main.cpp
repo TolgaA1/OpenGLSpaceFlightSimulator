@@ -57,6 +57,7 @@ glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
 
 glm::mat4 objectRotation,AIShipRotation;
 glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
+glm::vec3 spaceShipLandingSpherePos(0.0f, 0.0f, 0.0f);
 glm::vec3 pos = glm::vec3(0.0f,0.0f,0.0f); //vector for the position of the object.
 glm::vec3 tempPos = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 AIPos = glm::vec3{ 0.0f,0.0f,0.0f };
@@ -83,6 +84,8 @@ bool isThirdpersonView = false;
 bool isEnvironmentView = false;
 bool isPlanetView = false;
 bool isKnockedBack = false;
+bool isLanded = false;
+bool landingMode = false;
 int screenWidth=600, screenHeight=600;
 
 //booleans to handle when the arrow keys are pressed or released. TEST
@@ -99,11 +102,13 @@ bool d = false;
 bool w = false;
 bool s = false;
 bool v = false;
+bool r = false;
 
 double minx = 0, miny = 0, minz = 0, maxx = 0, maxy = 0, maxz = 0;
 float AIShipPosX, AIShipPosY, AIShipPosZ;
 float spin=180;
 float speed=0;
+float ySpeed = 0;
 
 //OPENGL FUNCTION PROTOTYPES
 void display();				//called in winmain to draw everything to the screen
@@ -145,6 +150,10 @@ void display()
 	pos.x += objectRotation[2][0]* speed;
 	pos.y += objectRotation[2][1]* speed;
 	pos.z += objectRotation[2][2]* speed;
+
+	pos.x += objectRotation[1][0] * ySpeed;
+	pos.y += objectRotation[1][1] * ySpeed;
+	pos.z += objectRotation[1][2] * ySpeed;
 
 	//Camera view toggling.
 	if (isEnvironmentView)
@@ -206,6 +215,21 @@ void display()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	plane.DrawOctreeLeaves(myBasicShader);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	//Spaceship landing collision sphere rendering
+
+	spaceShipLandingSpherePos.x = pos.x - objectRotation[1][0] * 1.7f;
+	spaceShipLandingSpherePos.y = pos.y - objectRotation[1][1] * 1.7f;
+	spaceShipLandingSpherePos.z = pos.z - objectRotation[1][2] * 1.7f;
+
+
+
+
+	ModelViewMatrix = glm::translate(viewingMatrix, spaceShipLandingSpherePos);
+	//ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	spaceShipLandingSphere.render();
 
 	//planeCollisionSphere.render();
@@ -329,10 +353,12 @@ void display()
 	*/
 
 	
-
-	if (((minx < x && maxx > x) && (miny < y && maxy> y) && (minz < z && maxz > z))) {
+	/*
+		if (((minx < x && maxx > x) && (miny < y && maxy> y) && (minz < z && maxz > z))) {
 		std::cout << "COLLISIONBOUNDING" << std::endl;
 	}
+	*/
+
 
 	/*
 	* 	if (plane.isColliding(glm::vec3(bob))) {
@@ -345,17 +371,38 @@ void display()
 
 	*/
 	//if speed to fast make spaceship bounce and dmg spaceship
-	if (plane.isColliding(marsCollisionSphere.getRadius(), glm::vec3(105104, 24994.3f, 46772.4), pos,speed))
+		//sphere to sphere collision
+
+	if (plane.isColliding(marsCollisionSphere.getRadius(), glm::vec3(105104, 24994.3f, 46772.4), pos, speed) && !isLanded)
 	{
+
+
 		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
-		pos = tempPos;
-		speed = -speed*0.85f;
+		//pos = tempPos;
+		speed = -speed;
 		isKnockedBack = true;
+
 		//pos = tempPos;
 	}
 	else
 	{
+
 		tempPos = pos;
+	}
+
+	double xe = spaceShipLandingSpherePos.x - 105104;
+	double ye = spaceShipLandingSpherePos.y - 24994.3;
+	double ze = spaceShipLandingSpherePos.z - 46772.4;
+	double e = pow(xe, 2) + pow(ye, 2) + pow(ze, 2);
+
+
+
+
+
+
+	if (isLanded)
+	{
+		speed = 0;
 	}
 	if (isKnockedBack)
 	{
@@ -373,8 +420,21 @@ void display()
 		}
 	}
 
+	if (e < pow((spaceShipLandingSphere.getRadius() + marsCollisionSphere.getRadius()), 2) && !isLanded && !isKnockedBack)
+	{
 
-
+		std::cout << "COLLISIONk" << std::endl;
+		isLanded = true;
+		pos.y = tempPos.y;
+	}
+	else
+	{
+		tempPos = pos;
+	}
+	if (isLanded)
+	{
+		pos.y = tempPos.y;
+	}
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
@@ -500,7 +560,7 @@ void init()
 	boxCollisionSphere.constructGeometry(myBasicShader, 16);
 
 	spaceShipLandingSphere.setCentre(0, 0, 0);
-	spaceShipLandingSphere.setRadius(5.0f);
+	spaceShipLandingSphere.setRadius(0.3f);
 	spaceShipLandingSphere.constructGeometry(myBasicShader, 16);
 
 	glUseProgram(myBasicShader->GetProgramObjID());  
@@ -552,6 +612,9 @@ void keyboard(unsigned char key, int x, int y)
 	case 'd':
 		d = true;
 		break;
+	case 'r':
+		r = true;
+		break;
 	case 's':
 		s = true;
 		break;
@@ -580,15 +643,20 @@ void keyboardUp(unsigned char key, int x, int y)
 		break;
 	case 'o':
 		o = false;
+		ySpeed = 0;
 		break;
 	case 'p':
 		p = false;
+		ySpeed = 0;
 		break;
 	case 'a':
 		a = false;
 		break;
 	case 'd':
 		d = false;
+		break;
+	case 'r':
+		r = false;
 		break;
 	case 's':
 		s = false;
@@ -627,17 +695,17 @@ void processKeys()
 {
 	float spinXinc = 0.0f, spinYinc = 0.0f, spinZinc = 0.0f;
 	//used to be 0.015
-	if (Left)
+	if (Left && !isLanded)
 	{
 		//used to be 0.00015
 		spinYinc = 0.0015f;
 
 	}
-	if (Right)
+	if (Right && !isLanded)
 	{
 		spinYinc = -0.0015f;
 	}
-	if (Up)
+	if (Up && !isLanded)
 	{
 		spinXinc = 0.0015f;
 	}
@@ -655,11 +723,11 @@ void processKeys()
 	}
 	if (o)
 	{
-		pos.y += 0.2f;
+		ySpeed = 2.2f;
 	}
-	if (p)
+	if (p && !isLanded)
 	{
-		pos.y -= 0.2f;
+		ySpeed = -2.4f;
 	}
 	if (a)
 	{
@@ -668,12 +736,14 @@ void processKeys()
 	//used to be 0.105
 	if (w)
 	{
+		isLanded = false;
 		speed += 0.0105f;
 	}
 	if (s)
 	{
 		speed -= 0.0105f;
 	}
+
 
 	updateTransform(spinXinc, spinYinc, spinZinc);
 }
