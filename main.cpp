@@ -1,12 +1,10 @@
 /*
 * TO-DO
-* ALLOW CAMERA SWITCH ONTO SOMEWHERE IN THE ENVIRONMENT
-* FIGURE OUT COLLISIONS
-* ALLOW PLANE TO TAKE OFF AND LAND
-* ADD MOVING OBJECT TO ENVIRONMENT
-* ALLOW COLLISION BETWEEN THAT AND PLANE
-* FIGURE OUT DAMAGE
-* atmosphere!!!
+* Maybe make pieces fall off when damaged? - slighty done
+* When knocked back, add a bit of rotation -
+* Add another camera view into the environment -
+* Potentially change to spotlight from area light -
+* Fix landing -
 */
 #include <iostream>
 using namespace std;
@@ -44,7 +42,7 @@ float temp = 0.002f;
 	
 Sphere planeCollisionSphere, boxCollisionSphere, marsCollisionSphere, venusCollisionSphere, mercuryCollisionSphere, AIShipCollisionSphere, spaceShipLandingSphere, frontPoint,backPoint;
 
-CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront, AIShip,shipFrontDmg,shipBackDmg,shipFrontBackDmg;
+CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront, AIShip,shipFrontDmg,shipBackDmg,shipFrontBackDmg,shipPiece;
 CThreeDModel plane; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ModelLoader modelLoader;
@@ -61,6 +59,7 @@ glm::vec3 tempPos = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 AIPos = glm::vec3{ 0.0f,10.0f,0.0f };
 glm::vec3 frontPointPos = glm::vec3{ 0.0f,0.0f,0.0f };
 glm::vec3 backPointPos = glm::vec3{ 0.0f,0.0f,0.0f };
+glm::vec3 piecePos = glm::vec3{ 0.0f,0.0f,0.0f };
 //Material properties
 float Material_Ambient[4] = {0.05f, 0.05f, 0.05f, 1.0f};
 float Material_Diffuse[4] = {0.8f, 0.8f, 0.8f, 1.0f};
@@ -87,6 +86,9 @@ bool isKnockedBack = false;
 bool isLanded = false;
 bool successfullyLanded = false;
 bool landingMode = false;
+bool pieceDropped = false;
+
+float pieceTimer = 10.0f;
 int screenWidth=600, screenHeight=600;
 
 //booleans to handle when the arrow keys are pressed or released. TEST
@@ -346,6 +348,33 @@ void display()
 
 	glUseProgram(myShader->GetProgramObjID());
 	
+	if (backDamage)
+	{
+		if (pieceTimer > 0.0f)
+		{
+			pieceTimer -= 0.004f;
+			piecePos.x = pos.x - objectRotation[0][0] * -4.5f;
+			piecePos.y = pos.y - objectRotation[0][1] * -4.5f;
+			piecePos.z = pos.z - objectRotation[0][2] * -4.5f;
+		}
+
+		ModelViewMatrix = glm::translate(viewingMatrix, piecePos);
+		//ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(pos.x - objectRotation[2][0] * -4.5f, pos.y - objectRotation[2][1] * -4.5f, pos.z - objectRotation[2][2] * -4.5f));
+		normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+		glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+		shipPiece.DrawElementsUsingVBO(myShader);
+	}
+	else
+	{
+		piecePos.x = pos.x - objectRotation[0][0] * -4.5f;
+		piecePos.y = pos.y - objectRotation[0][1] * -4.5f;
+		piecePos.z = pos.z - objectRotation[0][2] * -4.5f;
+		/*
+		* 		
+		*/
+
+	}
 
 	minx += pos.x;
 	maxx += pos.x;
@@ -688,9 +717,11 @@ void damageVisualManager()
 	if (frontDamage && backDamage)
 	{
 		shipFrontBackDmg.DrawElementsUsingVBO(myShader);
+
 	}
 	else if (frontDamage)
 	{
+
 		shipFrontDmg.DrawElementsUsingVBO(myShader);
 	}
 	else if (backDamage)
@@ -699,6 +730,7 @@ void damageVisualManager()
 	}
 	else
 	{
+
 		plane.DrawElementsUsingVBO(myShader);
 	}
 }
@@ -743,6 +775,7 @@ void init()
 	modelLoader.initModel("TestModels/otherSpaceship.obj", plane,myShader, true);
 	modelLoader.initModel("TestModels/otherSpaceshipFrontBackDmg.obj", shipFrontBackDmg, myShader, true);
 	modelLoader.initModel("TestModels/otherSpaceshipBackDmg.obj", shipBackDmg, myShader, true);
+	modelLoader.initModel("TestModels/otherShipPiece.obj", shipPiece, myShader, true);
 	modelLoader.initModel("TestModels/otherSpaceshipFrontDmg.obj", shipFrontDmg, myShader, true);
 	modelLoader.initModel("TestModels/Venus_1K.obj", venusPlanet, myShader, true);
 	modelLoader.initModel("TestModels/mars.obj", marsPlanet, myShader, true);
@@ -922,20 +955,20 @@ void processKeys()
 	if (Left && !isLanded)
 	{
 		//used to be 0.0015
-		spinYinc = 0.05f;
+		spinYinc = 0.0015f;
 
 	}
 	if (Right && !isLanded)
 	{
-		spinYinc = -0.05f;
+		spinYinc = -0.0015f;
 	}
 	if (Up && !isLanded)
 	{
-		spinXinc = 0.05f;
+		spinXinc = 0.0015f;
 	}
 	if (Down)
 	{
-		spinXinc = -0.05f;
+		spinXinc = -0.0015f;
 	}
 	if (q)
 	{
@@ -948,11 +981,11 @@ void processKeys()
 	//used to be 2.2 and -2.4
 	if (o)
 	{
-		ySpeed = 20.2f;
+		ySpeed = 2.2f;
 	}
 	if (p && !isLanded)
 	{
-		ySpeed = -6.4f;
+		ySpeed = -2.4f;
 	}
 	if (a)
 	{
@@ -963,12 +996,12 @@ void processKeys()
 	{
 		isLanded = false;
 		successfullyLanded = false;
-		speed += 10.105f;
+		speed += 0.0105f;
 	
 	}
 	if (s)
 	{
-		speed -= 10.105f;
+		speed -= 0.0105f;
 	}
 
 
