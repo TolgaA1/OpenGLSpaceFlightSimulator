@@ -2,7 +2,7 @@
 * TO-DO
 * Maybe make pieces fall off when damaged? - slighty done
 * When knocked back, add a bit of rotation -
-* Add another camera view into the environment -
+* Add another camera view into the environment - done
 * Fix landing -
 */
 #include <iostream>
@@ -39,9 +39,9 @@ CShader* myBasicShader;
 float amount = 0.001;
 float temp = 0.002f;
 	
-Sphere planeCollisionSphere, boxCollisionSphere, marsCollisionSphere, venusCollisionSphere, mercuryCollisionSphere, AIShipCollisionSphere, spaceShipLandingSphere, frontPoint,backPoint;
+Sphere planeCollisionSphere, boxCollisionSphere, marsCollisionSphere, venusCollisionSphere, mercuryCollisionSphere, AIShipCollisionSphere, spaceShipLandingSphere, sateliteCollisionSphere, frontPoint,backPoint;
 
-CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront, AIShip,shipFrontDmg,shipBackDmg,shipFrontBackDmg,shipPiece;
+CThreeDModel venusPlanet, marsPlanet, mercuryPlanet,boxRight, boxFront, AIShip,shipFrontDmg,shipBackDmg,shipFrontBackDmg,shipPiece, satelite, sun;
 CThreeDModel plane; //A threeDModel object is needed for each model loaded
 COBJLoader objLoader;	//this object is used to load the 3d models.
 ModelLoader modelLoader;
@@ -60,7 +60,7 @@ glm::vec3 frontPointPos = glm::vec3{ 0.0f,0.0f,0.0f };
 glm::vec3 backPointPos = glm::vec3{ 0.0f,0.0f,0.0f };
 glm::vec3 piecePos = glm::vec3{ 0.0f,0.0f,0.0f };
 //Material properties
-float Material_Ambient[4] = {0.05f, 0.05f, 0.05f, 1.0f};
+float Material_Ambient[4] = {0.07f, 0.07f, 0.07f, 1.0f};
 float Material_Diffuse[4] = {0.8f, 0.8f, 0.8f, 1.0f};
 float Material_Specular[4] = {0.9f,0.9f,0.9f,1.0f};
 float Material_Shininess = 100;
@@ -159,12 +159,12 @@ void display()
 	pos.x += objectRotation[1][0] * ySpeed;
 	pos.y += objectRotation[1][1] * ySpeed;
 	pos.z += objectRotation[1][2] * ySpeed;
-
+	std::cout << pos.x << std::endl;
 	//Camera view toggling.
 	if (isEnvironmentView)
 	{
-		viewingMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,0.0f));
-		//viewingMatrix = glm::lookAt(glm::vec3(pos.x, pos.y, pos.z), glm::vec3(pos.x, pos.y, pos.z), glm::vec3(objectRotation[1][0], objectRotation[1][1], objectRotation[1][2]));
+		//viewingMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(105104, 25994.3f, 46772.4));
+		viewingMatrix = glm::lookAt(glm::vec3(50, 4, 30), pos, glm::vec3(0,1,0));
 	}
 	else
 	{
@@ -252,9 +252,9 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	//frontPoint.render();
 
-	backPointPos.x = pos.x - objectRotation[2][0] * 7.5f;
-	backPointPos.y = pos.y - objectRotation[2][1] * 7.5f;
-	backPointPos.z = pos.z - objectRotation[2][2] * 7.5f;
+	backPointPos.x = pos.x - objectRotation[2][0] * 4.5f;
+	backPointPos.y = pos.y - objectRotation[2][1] * 4.5f;
+	backPointPos.z = pos.z - objectRotation[2][2] * 4.5f;
 
 	ModelViewMatrix = glm::translate(viewingMatrix, backPointPos);
 	//ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
@@ -263,7 +263,13 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	//backPoint.render();
 
-
+	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(50, 1, 30));
+	//ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
+	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
+	satelite.DrawElementsUsingVBO(myShader);
+	//sateliteCollisionSphere.render();
 
 
 
@@ -329,12 +335,13 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	boxRight.DrawElementsUsingVBO(myBasicShader);
 
+	//LIGHT SOURCE
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(LightPos2[0], LightPos2[1], LightPos2[2]));
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	venusPlanet.DrawElementsUsingVBO(myBasicShader);
+	sun.DrawElementsUsingVBO(myBasicShader);
 
 
 
@@ -352,13 +359,6 @@ void display()
 	
 	if (backDamage)
 	{
-		if (pieceTimer > 0.0f)
-		{
-			pieceTimer -= 0.004f;
-			piecePos.x = pos.x - objectRotation[0][0] * -4.5f;
-			piecePos.y = pos.y - objectRotation[0][1] * -4.5f;
-			piecePos.z = pos.z - objectRotation[0][2] * -4.5f;
-		}
 
 		ModelViewMatrix = glm::translate(viewingMatrix, piecePos);
 		//ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(pos.x - objectRotation[2][0] * -4.5f, pos.y - objectRotation[2][1] * -4.5f, pos.z - objectRotation[2][2] * -4.5f));
@@ -606,6 +606,13 @@ void collisionManager()
 			std::cout << "FRONT HIT" << std::endl;
 			frontDamage = true;
 		}
+
+		else if (glm::length(frontPointPos - glm::vec3(50, 1, 30)) < (frontPoint.getRadius() + sateliteCollisionSphere.getRadius()))
+		{
+
+			std::cout << "FRONT HIT" << std::endl;
+			frontDamage = true;
+		}
 	}
 	else {
 		if (glm::length(backPointPos - marsPos) < (backPoint.getRadius() + marsCollisionSphere.getRadius()))
@@ -627,6 +634,12 @@ void collisionManager()
 		}
 
 		else if (glm::length(backPointPos - AIPos) < (backPoint.getRadius() + AIShipCollisionSphere.getRadius()))
+		{
+
+			std::cout << "BACK HIT" << std::endl;
+			backDamage = true;
+		}
+		else if (glm::length(backPointPos - glm::vec3(50, 1, 30)) < (backPoint.getRadius() + sateliteCollisionSphere.getRadius()))
 		{
 
 			std::cout << "BACK HIT" << std::endl;
@@ -656,6 +669,16 @@ void collisionManager()
 			std::cout << "COLLISIONkzzz" << std::endl;
 			isLanded = true;
 		}
+	}
+
+	if (plane.isColliding(sateliteCollisionSphere.getRadius(), glm::vec3(50, 1, 30), pos, speed) && !isLanded)
+	{
+
+
+		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
+		speed = -speed;
+		//ySpeed = -ySpeed;
+		isKnockedBack = true;
 	}
 
 	if (plane.isColliding(mercuryCollisionSphere.getRadius(), mercuryPos, pos, speed) && !isLanded)
@@ -787,6 +810,8 @@ void init()
 	modelLoader.initModel("TestModels/Mercury_1K.obj", mercuryPlanet, myShader, false);
 	modelLoader.initModel("TestModels/Sample_Ship.obj", AIShip, myShader, true);
 	modelLoader.initModel("TestModels/boxRight.obj", boxFront, myShader, true);
+	modelLoader.initModel("TestModels/UHFSatcom.obj", satelite, myShader, true);
+	modelLoader.initModel("TestModels/sun.obj", sun, myShader, true);
 
 	planeCollisionSphere.setCentre(0, 0, 0);
 	planeCollisionSphere.setRadius(1);
@@ -816,6 +841,10 @@ void init()
 	AIShipCollisionSphere.setCentre(0, 0, 0);
 	AIShipCollisionSphere.setRadius(8.0f);
 	AIShipCollisionSphere.constructGeometry(myBasicShader, 16);
+
+	sateliteCollisionSphere.setCentre(0, 0, 0);
+	sateliteCollisionSphere.setRadius(8.0f);
+	sateliteCollisionSphere.constructGeometry(myBasicShader, 16);
 
 	frontPoint.setCentre(0, 0, 0);
 	frontPoint.setRadius(0.4f);
@@ -965,20 +994,20 @@ void processKeys()
 	if (Left && !isLanded)
 	{
 		//used to be 0.0015
-		spinYinc = 0.0015f;
+		spinYinc = 0.05f;
 
 	}
 	if (Right && !isLanded)
 	{
-		spinYinc = -0.0015f;
+		spinYinc = -0.05f;
 	}
 	if (Up && !isLanded)
 	{
-		spinXinc = 0.0015f;
+		spinXinc = 0.05f;
 	}
 	if (Down)
 	{
-		spinXinc = -0.0015f;
+		spinXinc = -0.05f;
 	}
 	if (q)
 	{
@@ -991,11 +1020,11 @@ void processKeys()
 	//used to be 2.2 and -2.4
 	if (o)
 	{
-		ySpeed = 2.2f;
+		ySpeed = 12.2f;
 	}
 	if (p && !isLanded)
 	{
-		ySpeed = -2.4f;
+		ySpeed = -12.4f;
 	}
 	if (a)
 	{
@@ -1009,11 +1038,12 @@ void processKeys()
 		
 		if (slowMode)
 		{
-			speed += 0.00000105f;
+			//used to be 0.00000105f
+			speed += 0.00105f;
 		}
 		else
 		{
-			speed += 0.0105f;
+			speed += 10.105f;
 		}
 	
 	}
@@ -1021,11 +1051,12 @@ void processKeys()
 	{
 		if (slowMode)
 		{
-			speed -= 0.00000105f;
+			//used to be 0.00000105f
+			speed -= 0.00105f;
 		}
 		else
 		{
-			speed -= 0.0105f;
+			speed -= 10.105f;
 		}
 	}
 

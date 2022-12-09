@@ -1,23 +1,11 @@
-# Blender MTL File: 'None'
-# Material Count: 2
-
-newmtl Material_#31.000
-Ns 18.000005
-Ka 1.000000 1.000000 1.000000
-Kd 0.800000 0.800000 0.800000
-Ks 0.000000 0.000000 0.000000
-Ke 0.0 0.0 0.0
-Ni 1.450000
-d 1.000000
-illum 1
-map_Kd 00_BaseColor_Merged.png
+# Blender 3.3.1 MTL File: 'None'
+# www.blender.org
 
 newmtl Material_#31.001
-Ns 18.000005
+Ns 18.000004
 Ka 1.000000 1.000000 1.000000
-Kd 0.800000 0.800000 0.800000
 Ks 0.000000 0.000000 0.000000
-Ke 0.0 0.0 0.0
+Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 1
