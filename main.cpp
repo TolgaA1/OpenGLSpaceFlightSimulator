@@ -71,7 +71,7 @@ float Light_Ambient_And_Diffuse[4] = { 1.0f, 1.f, 1.f, 1.0f };
 float Light_Ambient_And_Diffuse_Spaceship[4] = { 1.0f, 0.f, 0.f, 1.0f };
 //float Light_Specular[4] = {1.0f,1.0f,1.0f,1.0f};
 float Light_Specular[4] = { 0.1f,0.1f,0.1f,0.1f };
-float LightPos[4] = {0.0f,30.0f,0.0f,1.0f};
+float LightPos[4] = {0.0f,0.0f,0.0f,1.0f};
 float LightPos2[4] = { -137325.0f, 22617.0f, 300889.4f, 0.0f };
 
 
@@ -179,7 +179,6 @@ void display()
 		}
 	}
 
-
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
 	
@@ -187,10 +186,13 @@ void display()
 	//LightPos[1] = pos.y - objectRotation[2][1]*5;
 	//LightPos[2] = pos.z - objectRotation[2][2]*5;
 	
-
-
+	LightPos[0] = pos.x;
+	LightPos[1] = pos.y;
+	LightPos[2] = pos.z;
+	float direction[4] = { objectRotation[2][0], objectRotation[2][1], objectRotation[2][2],1};
 	//Passing variables onto shader
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightPos2"), 1, LightPos2);
+	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightDir"), 1, direction);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "LightPos"), 1, LightPos);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_ambient"), 1, Light_Ambient_And_Diffuse);
 	glUniform4fv(glGetUniformLocation(myShader->GetProgramObjID(), "light_diffuse"), 1, Light_Ambient_And_Diffuse);
@@ -481,6 +483,7 @@ void display()
 	}
 	if (isKnockedBack)
 	{
+
 		if (speed > 1)
 		{
 			speed -= 0.01f;
@@ -638,6 +641,7 @@ void collisionManager()
 		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
 		pos = tempPos;
 		speed = -speed;
+		objectRotation = glm::rotate(objectRotation, 0.045f, glm::vec3(0, 0, 1));
 		//ySpeed = -ySpeed;
 		isKnockedBack = true;
 

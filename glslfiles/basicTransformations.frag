@@ -8,6 +8,7 @@ in vec3 ex_LightPos;  //light direction arriving from the vertex
 in vec3 ex_LightDir;
 
 in vec3 ex_PositionEye;
+in vec3 ex_SpotLightDir; 
 
 uniform vec4 light_ambient;
 uniform vec4 light_diffuse;
@@ -25,6 +26,10 @@ uniform float quadraticAttenuation;
 uniform float constantAttenuation2;
 uniform float linearAttenuation2;
 uniform float quadraticAttenuation2;
+
+float spot_cutoff = 0.2;
+float spot_exponent = 50;
+
 void main(void)
 {
 	float dist,att;
@@ -55,21 +60,34 @@ void main(void)
 	
 	if(NdotL > 0.0) 
 	{
-			att = min(1.0 / (constantAttenuation +
+	
+	att = min(1.0 / (constantAttenuation +
                 linearAttenuation * dist +
                 quadraticAttenuation * dist * dist),1);
 
-		color1 = (light_diffuse_spaceship * material_diffuse * NdotL);
+		float LdotSpotLightDir = dot(L, normalize(ex_SpotLightDir));
+		if(LdotSpotLightDir > spot_cutoff)
+		{
+			vec4 col = (light_diffuse * material_diffuse * NdotL);
+			col += light_specular * material_specular * pow(RdotV, material_shininess);
+
+			col *= pow(LdotSpotLightDir, spot_exponent);
+			color += (col*att);
+		}
+			
+
+	//	color1 = (light_diffuse_spaceship * material_diffuse * NdotL);
 	}
 
-	color1 += material_specular * light_specular * pow(RdotV, material_shininess);
+	//color1 += material_specular * light_specular * pow(RdotV, material_shininess);
 
-	color1 *=att;
-	color+=color1;
+	//color1 *=att;
+	//color+=color1;
+
+
+
+
 	//light source 2
-	
-
-
 	
 
 	n = normalize(ex_Normal);
