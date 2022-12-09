@@ -3,7 +3,6 @@
 * Maybe make pieces fall off when damaged? - slighty done
 * When knocked back, add a bit of rotation -
 * Add another camera view into the environment -
-* Potentially change to spotlight from area light -
 * Fix landing -
 */
 #include <iostream>
@@ -87,6 +86,7 @@ bool isLanded = false;
 bool successfullyLanded = false;
 bool landingMode = false;
 bool pieceDropped = false;
+bool slowMode = false;
 
 float pieceTimer = 10.0f;
 int screenWidth=600, screenHeight=600;
@@ -551,11 +551,12 @@ void display()
 	AIShipPosY = 0.4f;
 	AIShipPosZ += 0.0005f;
 	//used to be 0.0105f
-	AIPos.x += 0.105f * AIShipRotation[2][0];
-	AIPos.y += 0.105f * AIShipRotation[2][1];
-	AIPos.z += 0.105f * AIShipRotation[2][2];
+	AIPos.x += 0.00105f * AIShipRotation[2][0];
+	AIPos.y += 0.00105f * AIShipRotation[2][1];
+	AIPos.z += 0.00105f * AIShipRotation[2][2];
 	//used to be 0.00015
-	AIShipRotation = glm::rotate(AIShipRotation, 0.015f, glm::vec3(0, 1, 0));
+	//FIX SHIP ROTATING WIH PLAYER
+	AIShipRotation = glm::rotate(AIShipRotation, 0.000075f, glm::vec3(0, 1, 0));
 	glm::mat4 AImodelmatrix = glm::translate(glm::mat4(1.0f), AIPos);
 
 	ModelViewMatrix = viewingMatrix * AImodelmatrix * AIShipRotation;
@@ -876,6 +877,9 @@ void keyboard(unsigned char key, int x, int y)
 	case 'r':
 		r = true;
 		break;
+	case 'z':
+		slowMode = !slowMode;
+		break;
 	case 's':
 		s = true;
 		break;
@@ -885,8 +889,10 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case 'b':
 		isEnvironmentView = !isEnvironmentView;
+		break;
 	case 'f':
 		speed = 0;
+		break;
 	case 'w':
 		w = true;
 		break;
@@ -1000,12 +1006,27 @@ void processKeys()
 	{
 		isLanded = false;
 		successfullyLanded = false;
-		speed += 0.0105f;
+		
+		if (slowMode)
+		{
+			speed += 0.00000105f;
+		}
+		else
+		{
+			speed += 0.0105f;
+		}
 	
 	}
 	if (s)
 	{
-		speed -= 0.0105f;
+		if (slowMode)
+		{
+			speed -= 0.00000105f;
+		}
+		else
+		{
+			speed -= 0.0105f;
+		}
 	}
 
 
