@@ -1,8 +1,8 @@
 /*
 * TO-DO
-* Maybe make pieces fall off when damaged? - done
-* Add another camera view into the environment - done
+* Make piece that fell off rotate around and maybe move
 * Fix landing - basoically is good but cna be better
+* maybe more sphere hitboxes of ship?
 * ADD CONTROLS IN COMMAND LINE SO MARKER KNOW WHAT TO DO
 */
 #include <iostream>
@@ -340,7 +340,7 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	boxRight.DrawElementsUsingVBO(myBasicShader);
+	//boxRight.DrawElementsUsingVBO(myBasicShader);
 
 	//LIGHT SOURCE
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(LightPos2[0], LightPos2[1], LightPos2[2]));
@@ -527,17 +527,17 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	AIShip.DrawElementsUsingVBO(myShader);
 	*/
-
+	//glUseProgram(myBasicShader->GetProgramObjID());
 	
 	AIShipPosX = 1.1f;
 	AIShipPosY = 0.4f;
 	AIShipPosZ += 0.0005f;
-	//used to be 0.0105f
-	AIPos.x += 0.00105f * AIShipRotation[2][0];
-	AIPos.y += 0.00105f * AIShipRotation[2][1];
-	AIPos.z += 0.00105f * AIShipRotation[2][2];
-	//used to be 0.00015
-	//FIX SHIP ROTATING WIH PLAYER
+	//used to be 0.00105f
+	AIPos.x += 0.105f * AIShipRotation[2][0];
+	AIPos.y += 0.105f * AIShipRotation[2][1];
+	AIPos.z += 0.105f * AIShipRotation[2][2];
+	//used to be 0.000075
+
 	AIShipRotation = glm::rotate(AIShipRotation, 0.000075f, glm::vec3(0, 1, 0));
 	glm::mat4 AImodelmatrix = glm::translate(glm::mat4(1.0f), AIPos);
 
@@ -594,6 +594,8 @@ void collisionManager()
 		{
 
 			std::cout << "FRONT HIT" << std::endl;
+			speed = -speed;
+			isKnockedBack = true;
 			frontDamage = true;
 		}
 
@@ -602,6 +604,8 @@ void collisionManager()
 
 			std::cout << "FRONT HIT" << std::endl;
 			frontDamage = true;
+			speed = -speed;
+			isKnockedBack = true;
 		}
 	}
 	else {
@@ -627,6 +631,8 @@ void collisionManager()
 		{
 
 			std::cout << "BACK HIT" << std::endl;
+			speed = -speed;
+			isKnockedBack = true;
 			backDamage = true;
 		}
 		else if (glm::length(backPointPos - glm::vec3(50, 1, 30)) < (backPoint.getRadius() + sateliteCollisionSphere.getRadius()) && !isLanded)
@@ -634,6 +640,8 @@ void collisionManager()
 
 			std::cout << "BACK HIT" << std::endl;
 			backDamage = true;
+			speed = -speed;
+			isKnockedBack = true;
 		}
 
 	}
@@ -679,9 +687,9 @@ void collisionManager()
 
 		pos = tempPos;
 		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
-		speed = -speed;
+		//speed = -speed;
 		//ySpeed = -ySpeed;
-		isKnockedBack = true;
+		//isKnockedBack = true;
 	}
 	else
 	{
@@ -761,9 +769,9 @@ void collisionManager()
 
 		std::cout << "COLLISIONBOUNDINGOCTREE WITH OTHER SPACE SHIP" << std::endl;
 		//pos = tempPos;
-		speed = -speed;
+		//speed = -speed;
 		//ySpeed = -ySpeed;
-		isKnockedBack = true;
+		//isKnockedBack = true;
 
 		//pos = tempPos;
 	}
@@ -869,11 +877,11 @@ void init()
 
 
 	AIShipCollisionSphere.setCentre(0, 0, 0);
-	AIShipCollisionSphere.setRadius(8.0f);
+	AIShipCollisionSphere.setRadius(3.5f);
 	AIShipCollisionSphere.constructGeometry(myBasicShader, 16);
 
 	sateliteCollisionSphere.setCentre(0, 0, 0);
-	sateliteCollisionSphere.setRadius(8.0f);
+	sateliteCollisionSphere.setRadius(6.0f);
 	sateliteCollisionSphere.constructGeometry(myBasicShader, 16);
 
 	frontPoint.setCentre(0, 0, 0);
