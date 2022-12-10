@@ -723,7 +723,6 @@ bool COctree::isColliding(float radius, glm::vec3 centerPoint, glm::vec3& AABBCe
 					if (isCollidingWithChild)
 					{
 						//glm::vec3 rayToNearest = closest
-
 						//std::cout << fOverlap << std::endl;
 						//std::cout << "speed " << speed << std::endl;
 						//AABBCenter = AABBCenter - glm::normalize(difference) * fOverlap;
