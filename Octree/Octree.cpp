@@ -618,14 +618,10 @@ void COctree::DrawOctreeLeaves(CShader* myShader)
 
 bool COctree::isColliding(glm::vec3 point)
 {
-	//putting if statement outside of depth statement made it print collision????
-	//std::cout << this->m_dMaxX << std::endl;
 
 	if (m_iLevel >= MAX_DEPTH) //leaf
 	{
-		//std::cout << point.y << std::endl;
-		//(this->m_dMinX < point.x && this->m_dMaxX > point.x) && (this->m_dMinY < point.y&& this->m_dMaxY > point.y) && (this->m_dMinZ < point.z&& this->m_dMaxZ > point.z))
-		//std::cout << this->m_dMaxX << std::endl;
+
 		if ((this->m_dMinX < point.x && this->m_dMaxX > point.x) && (this->m_dMinY < point.y&& this->m_dMaxY > point.y) && (this->m_dMinZ < point.z&& this->m_dMaxZ > point.z)){
 
 			return true;
@@ -642,7 +638,7 @@ bool COctree::isColliding(glm::vec3 point)
 		for (int i = 0; i < NUM_OF_OCTREE_CHILDREN; i++)
 		{
 			if (m_pobChildren[i] != nullptr) {
-
+				//checks min max of children nodes
 				if (((m_pobChildren[i]->m_dMinX < point.x && m_pobChildren[i]->m_dMaxX > point.x) && (m_pobChildren[i]->m_dMinY < point.y && m_pobChildren[i]->m_dMaxY > point.y) && (m_pobChildren[i]->m_dMinZ < point.z && m_pobChildren[i]->m_dMaxZ > point.z))) {
 					bool isCollidingWithChild = m_pobChildren[i]->isColliding(point);
 					if (isCollidingWithChild)
@@ -678,11 +674,9 @@ bool COctree::isColliding(float radius, glm::vec3 centerPoint, glm::vec3& AABBCe
 		glm::vec3 closest = aabb_center + clamped;
 		difference = closest - centerPoint;
 		float fOverlap = radius - glm::length(difference);
-		//std::cout << fOverlap << std::endl;
 
 		if (fOverlap > 0)
 		{
-			//AABBCenter = AABBCenter - glm::normalize(difference) * fOverlap;
 			return true;
 		}
 		else
@@ -722,10 +716,6 @@ bool COctree::isColliding(float radius, glm::vec3 centerPoint, glm::vec3& AABBCe
 					bool isCollidingWithChild = m_pobChildren[i]->isColliding(radius, centerPoint, aabb_center, speed);
 					if (isCollidingWithChild)
 					{
-						//glm::vec3 rayToNearest = closest
-						//std::cout << fOverlap << std::endl;
-						//std::cout << "speed " << speed << std::endl;
-						//AABBCenter = AABBCenter - glm::normalize(difference) * fOverlap;
 						return true;
 						
 					}

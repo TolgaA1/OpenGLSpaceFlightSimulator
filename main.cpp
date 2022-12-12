@@ -1,9 +1,6 @@
 /*
-* TO-DO
-* Make piece that fell off rotate around and maybe move
-* Fix landing - basoically is good but cna be better
-* maybe more sphere hitboxes of ship?
-* ADD CONTROLS IN COMMAND LINE SO MARKER KNOW WHAT TO DO
+*CW by Tolga Arduc
+* Controls are towards the bottom of main.cpp with speed controls
 */
 #include <iostream>
 using namespace std;
@@ -150,12 +147,7 @@ void display()
 	glm::mat4 viewingMatrix = glm::mat4(1.0f);
 	
 	//translation and rotation for view
-	//viewingMatrix = glm::translate(glm::mat4(1.0), glm::vec3(pos.x, pos.y, pos.z));
 
-	//apply a rotation to the view
-	//static float angle = 0.0f;
-	//angle += 0.01;
-	//viewingMatrix = glm::rotate(viewingMatrix, angle, glm::vec3(1.0f, 0.0f, 0.0));
 
 	pos.x += objectRotation[2][0]* speed;
 	pos.y += objectRotation[2][1]* speed;
@@ -168,7 +160,6 @@ void display()
 	//Camera view toggling.
 	if (isEnvironmentView)
 	{
-		//viewingMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(105104, 25994.3f, 46772.4));
 		viewingMatrix = glm::lookAt(glm::vec3(50, 4, 30), pos, glm::vec3(0,1,0));
 	}
 	else
@@ -186,10 +177,6 @@ void display()
 
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ViewMatrix"), 1, GL_FALSE, &viewingMatrix[0][0]);
 
-	
-	//LightPos[0] = pos.x - objectRotation[2][0]*5;
-	//LightPos[1] = pos.y - objectRotation[2][1]*5;
-	//LightPos[2] = pos.z - objectRotation[2][2]*5;
 	
 	LightPos[0] = pos.x;
 	LightPos[1] = pos.y;
@@ -299,12 +286,10 @@ void display()
 
 
 	ModelViewMatrix = glm::translate(viewingMatrix, mercuryPos);
-	//ModelViewMatrix = viewingMatrix * modelmatrix;
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	mercuryPlanet.DrawElementsUsingVBO(myShader);
-	mercuryCollisionSphere.render();
 
 	ModelViewMatrix = glm::translate(viewingMatrix, venusPos);
 
@@ -312,8 +297,8 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	venusPlanet.DrawElementsUsingVBO(myShader);
-	venusCollisionSphere.render();
 
+	//rendering the skybox
 	glUseProgram(myBasicShader->GetProgramObjID());  // use the shader
 
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(0, 0, 0));
@@ -321,6 +306,7 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
+	boxRight.DrawElementsUsingVBO(myBasicShader);
 
 	//LIGHT SOURCE
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(LightPos2[0], LightPos2[1], LightPos2[2]));
@@ -339,7 +325,6 @@ void display()
 	{
 
 		ModelViewMatrix = glm::translate(viewingMatrix, piecePos);
-		//ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(pos.x - objectRotation[2][0] * -4.5f, pos.y - objectRotation[2][1] * -4.5f, pos.z - objectRotation[2][2] * -4.5f));
 		normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 		glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 		glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
@@ -357,7 +342,7 @@ void display()
 	collisionManager();
 
 
-
+	//if has landed, stop spaceship entirely
 	if (isLanded)
 	{
 		if (!takeOff)
@@ -374,6 +359,7 @@ void display()
 		}
 
 	}
+	//if knocked back, apply fall off
 	if (isKnockedBack)
 	{
 
@@ -400,15 +386,16 @@ void display()
 
 	landingManager();
 
-	
+	//AI Ship rendering and movement
+
 	AIShipPosX = 1.1f;
 	AIShipPosY = 0.4f;
 	AIShipPosZ += 0.0005f;
-	//used to be 0.00105f
+
 	AIPos.x += 0.00105f * AIShipRotation[2][0];
 	AIPos.y += 0.00105f * AIShipRotation[2][1];
 	AIPos.z += 0.00105f * AIShipRotation[2][2];
-	//used to be 0.000075
+
 
 	AIShipRotation = glm::rotate(AIShipRotation, 0.000035f, glm::vec3(0, 1, 0));
 	glm::mat4 AImodelmatrix = glm::translate(glm::mat4(1.0f), AIPos);
@@ -418,7 +405,6 @@ void display()
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	AIShip.DrawElementsUsingVBO(myShader);
-	//AIShipCollisionSphere.render();
 
 	glFlush();
 	glutSwapBuffers();
@@ -488,31 +474,28 @@ void collisionManager()
 
 	if (speed > 0)
 	{
+		//this section deals with the damage of the space ship
+
 		if (glm::length(frontPointPos - marsPos) < (frontPoint.getRadius() + marsCollisionSphere.getRadius()) && !isLanded)
 		{
 
-			std::cout << "FRONT HIT" << std::endl;
 			frontDamage = true;
 		}
 
 		else if (glm::length(frontPointPos - mercuryPos) < (frontPoint.getRadius() + mercuryCollisionSphere.getRadius()) && !isLanded)
 		{
 
-			std::cout << "FRONT HIT" << std::endl;
 			frontDamage = true;
 		}
 
 		else if (glm::length(frontPointPos - venusPos) < (frontPoint.getRadius() + venusCollisionSphere.getRadius()) && !isLanded)
 		{
 
-			std::cout << "FRONT HIT" << std::endl;
 			frontDamage = true;
 		}
 
 		else if (glm::length(frontPointPos - AIPos) < (frontPoint.getRadius() + AIShipCollisionSphere.getRadius()) && !isLanded)
 		{
-
-			std::cout << "FRONT HIT" << std::endl;
 			speed = -speed;
 			isKnockedBack = true;
 			frontDamage = true;
@@ -521,7 +504,6 @@ void collisionManager()
 		else if (glm::length(frontPointPos - glm::vec3(50, 1, 30)) < (frontPoint.getRadius() + sateliteCollisionSphere.getRadius()) && !isLanded)
 		{
 
-			std::cout << "FRONT HIT" << std::endl;
 			frontDamage = true;
 			speed = -speed;
 			isKnockedBack = true;
@@ -530,26 +512,22 @@ void collisionManager()
 	else {
 		if (glm::length(backPointPos - marsPos) < (backPoint.getRadius() + marsCollisionSphere.getRadius()) && !isLanded)
 		{
-			std::cout << "BACK HIT" << std::endl;
 			backDamage = true;
 		}
 
 		else if (glm::length(backPointPos - mercuryPos) < (backPoint.getRadius() + mercuryCollisionSphere.getRadius()) && !isLanded)
 		{
-			std::cout << "BACK HIT" << std::endl;
 			backDamage = true;
 		}
 
 		else if (glm::length(backPointPos - venusPos) < (backPoint.getRadius() + venusCollisionSphere.getRadius()) && !isLanded)
 		{
-			std::cout << "BACK HIT" << std::endl;
 			backDamage = true;
 		}
 
 		else if (glm::length(backPointPos - AIPos) < (backPoint.getRadius() + AIShipCollisionSphere.getRadius()) && !isLanded)
 		{
 
-			std::cout << "BACK HIT" << std::endl;
 			speed = -speed;
 			isKnockedBack = true;
 			backDamage = true;
@@ -557,26 +535,20 @@ void collisionManager()
 		else if (glm::length(backPointPos - glm::vec3(50, 1, 30)) < (backPoint.getRadius() + sateliteCollisionSphere.getRadius()) && !isLanded)
 		{
 
-			std::cout << "BACK HIT" << std::endl;
 			backDamage = true;
 			speed = -speed;
 			isKnockedBack = true;
 		}
 
 	}
-
+	//this deals with the overall collisions
 	if (plane.isColliding(marsCollisionSphere.getRadius(), marsPos, pos, speed) && !isLanded)
 	{
 
 
-		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
 		pos = tempPos;
-		//pos = glm::vec3(pos.x + marsCollisionSphere.getRadius(), pos.y + marsCollisionSphere.getRadius(), pos.z + marsCollisionSphere.getRadius());
 		speed = -speed;
-		//objectRotation = glm::rotate(objectRotation, 0.045f, glm::vec3(0, 0, 1));
 		isKnockedBack = true;
-
-		//pos = tempPos;
 	}
 	else
 	{
@@ -592,10 +564,7 @@ void collisionManager()
 	{
 
 		pos = tempPos;
-		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
-		//speed = -speed;
-		//ySpeed = -ySpeed;
-		//isKnockedBack = true;
+
 	}
 	else
 	{
@@ -605,8 +574,6 @@ void collisionManager()
 	if (plane.isColliding(mercuryCollisionSphere.getRadius(), mercuryPos, pos, speed) && !isLanded)
 	{
 
-
-		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
 		pos = tempPos;
 		speed = -speed;
 		//ySpeed = -ySpeed;
@@ -626,14 +593,10 @@ void collisionManager()
 	if (plane.isColliding(venusCollisionSphere.getRadius(), venusPos, pos, speed) && !isLanded)
 	{
 
-
-		std::cout << "COLLISIONBOUNDINGOCTREE" << std::endl;
 		pos = tempPos;
 		speed = -speed;
-		//ySpeed = -ySpeed;
 		isKnockedBack = true;
 
-		//pos = tempPos;
 	}
 	else
 	{
@@ -644,23 +607,12 @@ void collisionManager()
 		}
 	}
 
-	if (plane.isColliding(AIShipCollisionSphere.getRadius(), AIPos, pos, speed) && !isLanded)
-	{
-
-
-		std::cout << "COLLISIONBOUNDINGOCTREE WITH OTHER SPACE SHIP" << std::endl;
-		//pos = tempPos;
-		//speed = -speed;
-		//ySpeed = -ySpeed;
-		//isKnockedBack = true;
-
-		//pos = tempPos;
-	}
-
 
 }
+
 void damageVisualManager()
 {
+	//this visually updates ship depending on where it got hit.
 	if (frontDamage && backDamage)
 	{
 		shipFrontBackDmg.DrawElementsUsingVBO(myShader);
@@ -719,6 +671,7 @@ void init()
 
 	objectRotation = glm::mat4(1.0f);
 	AIShipRotation = glm::mat4(1.0f);
+	//loading in the 3D models
 	modelLoader.initModel("TestModels/otherSpaceship.obj", plane,myShader, true);
 	modelLoader.initModel("TestModels/otherSpaceshipFrontBackDmg.obj", shipFrontBackDmg, myShader, true);
 	modelLoader.initModel("TestModels/otherSpaceshipBackDmg.obj", shipBackDmg, myShader, true);
@@ -737,15 +690,15 @@ void init()
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
 	
 	marsCollisionSphere.setCentre(0, 0, 0);
-	marsCollisionSphere.setRadius(27020);
+	marsCollisionSphere.setRadius(27060);
 	marsCollisionSphere.constructGeometry(myBasicShader, 50);
 
 	venusCollisionSphere.setCentre(0, 0, 0);
-	venusCollisionSphere.setRadius(31220);
+	venusCollisionSphere.setRadius(30820);
 	venusCollisionSphere.constructGeometry(myBasicShader, 50);
 
 	mercuryCollisionSphere.setCentre(0, 0, 0);
-	mercuryCollisionSphere.setRadius(16520);
+	mercuryCollisionSphere.setRadius(16020);
 	mercuryCollisionSphere.constructGeometry(myBasicShader, 50);
 
 	boxCollisionSphere.setCentre(0, 0, 0);
@@ -905,10 +858,9 @@ void specialUp(int key, int x, int y)
 void processKeys()
 {
 	float spinXinc = 0.0f, spinYinc = 0.0f, spinZinc = 0.0f;
-	//used to be 0.015
 	if (Left && !isLanded)
 	{
-		//used to be 0.0015
+
 		spinYinc = 0.00095f;
 
 	}
@@ -926,36 +878,38 @@ void processKeys()
 	}
 	if (q && !isLanded)
 	{
-		spinZinc = 0.015f;
+		spinZinc = 0.00015f;
 	}
-	if (e)
+	if (e && !isLanded)
 	{
-		spinZinc = -0.015f;
+		spinZinc = -0.00015f;
 	}
-	//used to be 2.2 and -2.4
 	if (o && isLanded && !takeOff)
 	{
-		//ySpeed += 5.2f;
 		takeOff = true;
 	}
-	if (p && !isLanded)
+	if (p && !isLanded && speed == 0)
 	{
-		std::cout << "ARE U KIDDING WIT ME HIT just to suffer" << std::endl;
 		ySpeed = -0.9f;
 	}
-	//used to be 0.0105
 	if (w)
 	{
-
 		
 		if (slowMode)
 		{
-			//used to be 0.00000105f
-			speed += 0.00000105f;
+			if (speed < 25)
+			{
+				speed += 0.00000105f;
+			}
+
 		}
 		else
 		{
-			speed += 0.0105f;
+			if (speed < 25)
+			{
+				speed += 0.0105f;
+			}
+
 		}
 	
 	}
@@ -963,12 +917,15 @@ void processKeys()
 	{
 		if (slowMode)
 		{
-			//used to be 0.00000105f
 			speed -= 0.00000105f;
 		}
 		else
 		{
-			speed -= 0.0105f;
+			if (speed > -25)
+			{
+				speed -= 0.0105f;
+			}
+
 		}
 	}
 
