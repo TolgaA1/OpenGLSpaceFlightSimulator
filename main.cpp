@@ -50,7 +50,7 @@ ModelLoader modelLoader;
 glm::mat4 ProjectionMatrix; // matrix for the orthographic projection
 glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
 
-glm::mat4 objectRotation,AIShipRotation;
+glm::mat4 objectRotation,AIShipRotation, pieceRotation;
 glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 spaceShipLandingSpherePos(0.0f, 0.0f, 0.0f);
 glm::vec3 pos = glm::vec3(0.0f,0.0f,0.0f); //vector for the position of the object.
@@ -91,7 +91,7 @@ bool successfullyLanded = false;
 bool landingMode = false;
 bool pieceDropped = false;
 bool slowMode = false;
-
+bool isLandingMars, isLandingMercury, isLandingVenus;
 float pieceTimer = 10.0f;
 int screenWidth=600, screenHeight=600;
 
@@ -126,6 +126,7 @@ void idle();		//idle function
 void updateTransform(float xinc, float yinc, float zinc);
 void damageVisualManager();
 void collisionManager();
+void landingManager();
 
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display()									
@@ -243,49 +244,35 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	spaceShipLandingSphere.render();
+	//spaceShipLandingSphere.render();
 
 	frontPointPos.x = pos.x - objectRotation[2][0] * -4.5f;
 	frontPointPos.y = pos.y - objectRotation[2][1] * -4.5f;
 	frontPointPos.z = pos.z - objectRotation[2][2] * -4.5f;
 
+	//front test point
 	ModelViewMatrix = glm::translate(viewingMatrix, frontPointPos);
-	//ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	//frontPoint.render();
 
 	backPointPos.x = pos.x - objectRotation[2][0] * 4.5f;
 	backPointPos.y = pos.y - objectRotation[2][1] * 4.5f;
 	backPointPos.z = pos.z - objectRotation[2][2] * 4.5f;
 
+	//back test point
 	ModelViewMatrix = glm::translate(viewingMatrix, backPointPos);
-	//ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	//backPoint.render();
 
+	//satelite rendering
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(50, 1, 30));
-	//ModelViewMatrix = viewingMatrix * modelmatrix * objectRotation;
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	satelite.DrawElementsUsingVBO(myShader);
-	//sateliteCollisionSphere.render();
 
-
-
-	
-	//if (glm::length(frontPointPos - glm::vec3(105104, 24994.3, 46772.4)) < (frontPoint.getRadius() + marsCollisionSphere.getRadius()))
-
-
-
-	//-------------------------------------
-	// 
-	// 
-	//planeCollisionSphere.render();
 
 
 
@@ -302,19 +289,13 @@ void display()
 	//switch back to the shader for textures and lighting on the objects.
 	glUseProgram(myShader->GetProgramObjID());  // use the shader
 
-
-	//testModel.DrawElementsUsingVBO(myShader);
-	//testModel.CalcBoundingBox(minx, miny, minz, maxx, maxy, maxz);
-	//venusPlanet.CalcBoundingBox(minx,miny,minz,maxx,maxy,maxz);
 	
 	//PLANET CENTERING
 	ModelViewMatrix = glm::translate(viewingMatrix, marsPos);
-	//ModelViewMatrix = viewingMatrix * modelmatrix;
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	marsPlanet.DrawElementsUsingVBO(myShader);
-	//marsCollisionSphere.render();
 
 
 	ModelViewMatrix = glm::translate(viewingMatrix, mercuryPos);
@@ -323,15 +304,15 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	mercuryPlanet.DrawElementsUsingVBO(myShader);
-	//mercuryCollisionSphere.render();
+	mercuryCollisionSphere.render();
 
 	ModelViewMatrix = glm::translate(viewingMatrix, venusPos);
-	//ModelViewMatrix = viewingMatrix * modelmatrix;
+
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	venusPlanet.DrawElementsUsingVBO(myShader);
-	//venusCollisionSphere.render();
+	venusCollisionSphere.render();
 
 	glUseProgram(myBasicShader->GetProgramObjID());  // use the shader
 
@@ -340,11 +321,9 @@ void display()
 	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
 
 	glUniformMatrix4fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	//boxRight.DrawElementsUsingVBO(myBasicShader);
 
 	//LIGHT SOURCE
 	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(LightPos2[0], LightPos2[1], LightPos2[2]));
-	//ModelViewMatrix = viewingMatrix * modelmatrix;
 
 	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 	glUniformMatrix3fv(glGetUniformLocation(myBasicShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
@@ -355,7 +334,7 @@ void display()
 
 
 	glUseProgram(myShader->GetProgramObjID());
-	
+
 	if (backDamage)
 	{
 
@@ -374,77 +353,9 @@ void display()
 
 	}
 
-	minx += pos.x;
-	maxx += pos.x;
-	miny += pos.y;
-	maxy += pos.y;
-	minz += pos.z;
-	maxz += pos.z;
-	
-
-
-	/*
-	* 	if (((10 - pos.x)*(10 - pos.x)) + ((20 -pos.y)*(20-pos.y)) +((0 - pos.z)*(0-pos.z)) < (6 + 8) * (6 + 8)) {
-		std::cout << "COLLISIONk" << std::endl;
-	}
-	else
-	{
-
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		boxCollisionSphere.render();
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
-	*/
-
-	//boxFront.drawElementsUsingVBO(myShader);
-	/*
-	* 	double x, y, z;
-	x = 0;
-	y = 0.4;
-	z = 0.9;
-	*/
-	double x, y, z;
-	x = 105104;
-	y = 24994.3f;
-	z = 46772.4;
-	glm::vec4 bob = glm::inverse(modelmatrix * objectRotation) * glm::vec4(x, y, z, 1);
-	//glm::vec4 bob = glm::vec4(x,y,z,1) * glm::inverse(modelmatrix*objectRotation);
-
-	ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(x, y, z));
-	/*
-	
-	
-		double halfWidthX = maxx - minx;
-	double halfWidthY = maxy - miny;
-	double halfWidthZ = maxz - minz;
-	glm::vec3 aabb_half(halfWidthX, halfWidthY, halfWidthZ);
-	glm::vec3 difference = glm::vec3(x,y,z) - pos;
-	glm::vec3 clamped = glm::clamp(difference, -aabb_half, aabb_half);
-	glm::vec3 closest = pos + clamped;
-	difference = closest - glm::vec3(x, y, z);
-	if (glm::length(difference) < marsCollisionSphere.getRadius())
-	{
-		std::cout << "COLLISIONBOUNDINGSPEHERE" << std::endl;
-	}
-	
-	
-	*/
-
-	//if speed to fast make spaceship bounce and dmg spaceship
-		//sphere to sphere collision
 
 	collisionManager();
 
-	double xe = spaceShipLandingSpherePos.x - 105104;
-	double ye = spaceShipLandingSpherePos.y - 24994.3;
-	double ze = spaceShipLandingSpherePos.z - 46772.4;
-	double e = pow(xe, 2) + pow(ye, 2) + pow(ze, 2);
-
-
-
-	//if (glm::length(spaceShipLandingSpherePos - glm::vec3(105104, 24994.3, 46772.4)) < (spaceShipLandingSphere.getRadius() + marsCollisionSphere.getRadius()))
-
-	//(((spaceShipLandingSpherePos.x - 105104) * (spaceShipLandingSpherePos.x - 105104)) + ((spaceShipLandingSpherePos.y - 24994.3) * (spaceShipLandingSpherePos.y - 24994.3)) + ((spaceShipLandingSpherePos.z - 46772.4) * (spaceShipLandingSpherePos.z - 46772.4)) < (spaceShipLandingSphere.getRadius() + marsCollisionSphere.getRadius()) * (spaceShipLandingSphere.getRadius() + marsCollisionSphere.getRadius()))
 
 
 	if (isLanded)
@@ -487,58 +398,19 @@ void display()
 	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
 	boxCollisionSphere.render();
 
+	landingManager();
 
-	/*
-	* FOR ROTATION USE AS REFERENCE
-	* glm::mat4 AImodelmatrix =  glm::translate(glm::mat4(1.0f), AIShipPosX,AIShipPosY,AIShipPosZ);
-	ModelViewMatrix = viewingMatrix * AImodelmatrix * AIShipRotation;
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	glm::mat3 normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	*/
-
-	/*
-		AIShipRotation = glm::rotate(AIShipRotation, 0.0015f, glm::vec3(0, 0, 1));
-	AIShipPosX = 1.1f;
-	AIShipPosY = 0.4f;
-	AIShipPosZ += 0.0005f;
-	AIPos.x = 0.01f*AIShipRotation[2][0];
-	AIPos.y = 0.01f*AIShipRotation[2][1];
-	AIPos.z = 0.01f*AIShipRotation[2][2];
-	glm::mat4 AImodelmatrix = glm::translate(glm::mat4(1.0f), AIPos);
-
-	ModelViewMatrix = viewingMatrix * AImodelmatrix * AIShipRotation;
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-	AIShip.DrawElementsUsingVBO(myShader);
-	*/
-
-
-	/*
-	* 	pos.x += objectRotation[2][0] * speed;
-	pos.y += objectRotation[2][1] * speed;
-	pos.z += objectRotation[2][2] * speed;
-	* 	//ModelViewMatrix = glm::translate(viewingMatrix, glm::vec3(AIShipPosX, AIShipPosY, AIShipPosZ));
-	AIShipRotation = glm::rotate(objectRotation, 0.0015f, glm::vec3(1, 0, 0));
-	normalMatrix = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
-	glUniformMatrix3fv(glGetUniformLocation(myShader->GetProgramObjID(), "NormalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
-
-	glUniformMatrix4fv(glGetUniformLocation(myShader->GetProgramObjID(), "ModelViewMatrix"), 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	AIShip.DrawElementsUsingVBO(myShader);
-	*/
-	//glUseProgram(myBasicShader->GetProgramObjID());
 	
 	AIShipPosX = 1.1f;
 	AIShipPosY = 0.4f;
 	AIShipPosZ += 0.0005f;
 	//used to be 0.00105f
-	AIPos.x += 0.105f * AIShipRotation[2][0];
-	AIPos.y += 0.105f * AIShipRotation[2][1];
-	AIPos.z += 0.105f * AIShipRotation[2][2];
+	AIPos.x += 0.00105f * AIShipRotation[2][0];
+	AIPos.y += 0.00105f * AIShipRotation[2][1];
+	AIPos.z += 0.00105f * AIShipRotation[2][2];
 	//used to be 0.000075
 
-	AIShipRotation = glm::rotate(AIShipRotation, 0.000075f, glm::vec3(0, 1, 0));
+	AIShipRotation = glm::rotate(AIShipRotation, 0.000035f, glm::vec3(0, 1, 0));
 	glm::mat4 AImodelmatrix = glm::translate(glm::mat4(1.0f), AIPos);
 
 	ModelViewMatrix = viewingMatrix * AImodelmatrix * AIShipRotation;
@@ -551,19 +423,66 @@ void display()
 	glFlush();
 	glutSwapBuffers();
 }
+void landingManager()
+{
+	if (isLandingMars)
+	{
+		if (!isLanded && !takeOff)
+		{
+			landingMode = true;
+		}
 
+		if (landingMode)
+		{
+			isLanded = true;
+			landingMode = false;
+			isLandingMars = false;
+		}
+	}
+	if (isLandingMercury)
+	{
+		if (!isLanded && !takeOff)
+		{
+			landingMode = true;
+		}
+
+		if (landingMode)
+		{
+			isLanded = true;
+			landingMode = false;
+			isLandingMercury = false;
+		}
+	}
+	if (isLandingVenus)
+	{
+		if (!isLanded && !takeOff)
+		{
+			landingMode = true;
+		}
+
+		if (landingMode)
+		{
+			isLanded = true;
+			landingMode = false;
+			isLandingVenus = false;
+		}
+	}
+}
 void collisionManager()
 {
 	if (takeOff)
 	{
 		
-		ySpeed += 1;
-		if (ySpeed > 110)
+		ySpeed += 0.001f;
+		if (ySpeed > 3)
 		{
 			takeOff = false;
 			isLanded = false;
 
 			ySpeed = 0;
+			isLandingMars = false;
+			isLandingMercury = false;
+			isLandingVenus = false;
 		}
 	}
 
@@ -662,23 +581,10 @@ void collisionManager()
 	else
 	{
 		tempPos = pos;
-		if (glm::length(spaceShipLandingSpherePos - marsPos) < (spaceShipLandingSphere.getRadius() + marsCollisionSphere.getRadius()) && speed <1)
+		if (glm::length(spaceShipLandingSpherePos - marsPos) < (spaceShipLandingSphere.getRadius() + marsCollisionSphere.getRadius()) && speed == 0.0f)
 		{
-			std::cout << "COLLISIONkzzz" << std::endl;
-			if (!isLanded)
-			{
-				if (pos.y < 0)
-				{
-					pos.y += 424;
-				}
-				else
-				{
-					pos.y -= 424;
-				}
-				
-			}
+			isLandingMars = true;
 
-			isLanded = true;
 		}
 	}
 
@@ -711,22 +617,9 @@ void collisionManager()
 	else
 	{
 		tempPos = pos;
-		if (glm::length(spaceShipLandingSpherePos - mercuryPos) < (spaceShipLandingSphere.getRadius() + mercuryCollisionSphere.getRadius()) && speed < 1)
+		if (glm::length(spaceShipLandingSpherePos - mercuryPos) < (spaceShipLandingSphere.getRadius() + mercuryCollisionSphere.getRadius()) && speed == 0.0f)
 		{
-			std::cout << "COLLISIONkzzz" << std::endl;
-			if (!isLanded)
-			{
-				if (pos.y < 0)
-				{
-					pos.y += 424;
-				}
-				else
-				{
-					pos.y -= 424;
-				}
-			}
-
-			isLanded = true;
+			isLandingMercury = true;
 		}
 	}
 
@@ -745,21 +638,9 @@ void collisionManager()
 	else
 	{
 		tempPos = pos;
-		if (glm::length(spaceShipLandingSpherePos - venusPos) < (spaceShipLandingSphere.getRadius() + venusCollisionSphere.getRadius()) && speed < 1)
+		if (glm::length(spaceShipLandingSpherePos - venusPos) < (spaceShipLandingSphere.getRadius() + venusCollisionSphere.getRadius()) && speed == 0.0f)
 		{
-			std::cout << "COLLISIONkzzz venuuuuus" << std::endl;
-			if (!isLanded)
-			{
-				if (pos.y < 0)
-				{
-					pos.y += 424;
-				}
-				else
-				{
-					pos.y -= 424;
-				}
-			}
-			isLanded = true;
+			isLandingVenus = true;
 		}
 	}
 
@@ -856,7 +737,7 @@ void init()
 	planeCollisionSphere.constructGeometry(myBasicShader, 16);
 	
 	marsCollisionSphere.setCentre(0, 0, 0);
-	marsCollisionSphere.setRadius(27320);
+	marsCollisionSphere.setRadius(27020);
 	marsCollisionSphere.constructGeometry(myBasicShader, 50);
 
 	venusCollisionSphere.setCentre(0, 0, 0);
@@ -985,9 +866,6 @@ void keyboardUp(unsigned char key, int x, int y)
 	case 'a':
 		a = false;
 		break;
-	case 'd':
-		d = false;
-		break;
 	case 'r':
 		r = false;
 		break;
@@ -1031,20 +909,20 @@ void processKeys()
 	if (Left && !isLanded)
 	{
 		//used to be 0.0015
-		spinYinc = 0.05f;
+		spinYinc = 0.00095f;
 
 	}
 	if (Right && !isLanded)
 	{
-		spinYinc = -0.05f;
+		spinYinc = -0.00095f;
 	}
 	if (Up && !isLanded)
 	{
-		spinXinc = 0.05f;
+		spinXinc = 0.00095f;
 	}
 	if (Down && !isLanded)
 	{
-		spinXinc = -0.05f;
+		spinXinc = -0.00095f;
 	}
 	if (q && !isLanded)
 	{
@@ -1063,11 +941,7 @@ void processKeys()
 	if (p && !isLanded)
 	{
 		std::cout << "ARE U KIDDING WIT ME HIT just to suffer" << std::endl;
-		ySpeed = -12.4f;
-	}
-	if (a)
-	{
-		pos.x -= 0.2f;
+		ySpeed = -0.9f;
 	}
 	//used to be 0.0105
 	if (w)
@@ -1077,11 +951,11 @@ void processKeys()
 		if (slowMode)
 		{
 			//used to be 0.00000105f
-			speed += 0.00105f;
+			speed += 0.00000105f;
 		}
 		else
 		{
-			speed += 10.105f;
+			speed += 0.0105f;
 		}
 	
 	}
@@ -1090,11 +964,11 @@ void processKeys()
 		if (slowMode)
 		{
 			//used to be 0.00000105f
-			speed -= 0.00105f;
+			speed -= 0.00000105f;
 		}
 		else
 		{
-			speed -= 10.105f;
+			speed -= 0.0105f;
 		}
 	}
 
