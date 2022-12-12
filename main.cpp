@@ -729,7 +729,7 @@ void init()
 	glUseProgram(myBasicShader->GetProgramObjID());  
 	glEnable(GL_TEXTURE_2D);
 	modelLoader.initModel("TestModels/skybox.obj", boxRight, myBasicShader, false);
-
+	std::cout << "CONTROLS - Z - slow mode\n W - speed forward\nS - slow down reverse\nQ and E - spin around\nV - switch views\n B - environment view\nP to decend to land when speed is 0\nO to take off once landed\nShip comes to stop when landing complete.\nif speed is too fast, you can adjust values bottom of code" << std::endl;
 
 }
 
